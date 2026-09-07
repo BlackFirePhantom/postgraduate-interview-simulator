@@ -75,26 +75,26 @@
     <!-- 2. 自我介绍界面 -->
     <div id="view-intro" style="display: none; flex-direction: column; height: 100%;">
       <div class="interviewer-box">
-        <div id="intro-avatar" class="avatar speaking">博</div>
-        <div class="speech-bubble">
+        <div id="intro-avatar" class="avatar speaking" style="background: linear-gradient(135deg, #7f1d1d, #991b1b);">严</div>
+        <div class="speech-bubble" style="border-left: 3px solid #dc2626;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <strong style="font-size: 0.85rem; color: #1e3a8a;">主考官 (教授)</strong>
-            <span id="intro-speaking-status" style="font-size: 0.72rem; color: #2563eb; display: flex; align-items: center;">
-              <span>考官引导中...</span>
+            <strong style="font-size: 0.85rem; color: #991b1b;">主考官 · 专家组长</strong>
+            <span id="intro-speaking-status" style="font-size: 0.72rem; color: #dc2626; display: flex; align-items: center;">
+              <span>⚡ 严厉发问中...</span>
               <span class="voice-wave-container">
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
+                <span class="wave-bar" style="background: #dc2626;"></span>
+                <span class="wave-bar" style="background: #dc2626;"></span>
+                <span class="wave-bar" style="background: #dc2626;"></span>
+                <span class="wave-bar" style="background: #dc2626;"></span>
               </span>
             </span>
           </div>
           <div style="font-size: 0.95rem; line-height: 1.5; color: #1e293b;">
-            同学你好，欢迎参加本次保研面试！请先向在座各位老师进行<strong>自我介绍</strong>（中英文皆可，请自然作答）。
+            同学注意把控时间！今天我们已经面试了几十名考生，<strong>不要讲空话套话</strong>。请直接用最精炼的语言，汇报你的核心硬核竞争力与科研实践成果！
           </div>
           <div style="margin-top: 8px;">
             <button type="button" id="btn-replay-intro-audio" class="action-btn tts-btn" style="font-size: 0.75rem; padding: 3px 8px;">
-              <span>🔁 重新播放引导语音</span>
+              <span>🔁 重新播放考官口头提问</span>
             </button>
           </div>
         </div>
@@ -124,12 +124,12 @@
     <div id="view-question" style="display: none; flex-direction: column; height: 100%;">
       <!-- 面试官提问气泡与沉浸式声波 -->
       <div class="interviewer-box" style="margin-bottom: 12px;">
-        <div id="question-avatar" class="avatar speaking">师</div>
-        <div class="speech-bubble">
+        <div id="question-avatar" class="avatar speaking" style="background: linear-gradient(135deg, #1e293b, #334155);">考</div>
+        <div class="speech-bubble" style="border-left: 3px solid #1e3a8a;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <strong id="interviewer-role-name" style="font-size: 0.85rem; color: #1e3a8a;">考官提问</strong>
+            <strong id="interviewer-role-name" style="font-size: 0.85rem; color: #1e3a8a;">专家主考官</strong>
             <span id="question-speaking-status" style="font-size: 0.72rem; color: #2563eb; display: flex; align-items: center;">
-              <span id="speaking-text">正在口头提问...</span>
+              <span id="speaking-text">⚡ 考官严肃提问中...</span>
               <span class="voice-wave-container">
                 <span class="wave-bar"></span>
                 <span class="wave-bar"></span>
@@ -148,7 +148,7 @@
               <span>🔁</span>
               <span>重新听考官提问</span>
             </button>
-            <span style="font-size: 0.7rem; color: #94a3b8;">高保真考官人声</span>
+            <span style="font-size: 0.7rem; color: #ef4444; font-weight: 500;">严肃紧凑音质 · 直击核心</span>
           </div>
         </div>
       </div>

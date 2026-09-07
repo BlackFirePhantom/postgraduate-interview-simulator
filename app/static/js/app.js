@@ -93,13 +93,13 @@ function setupEventListeners() {
   const introTextarea = document.getElementById("intro-textarea");
   document.getElementById("btn-preset-zh").addEventListener("click", () => {
     introTextarea.value =
-      "各位老师好，我叫李华，来自软件工程专业。在本科期间我专业成绩排名前5%，主持过一项深度学习模型优化国家级大创项目，并发表过一篇CCF推荐会议论文。非常荣幸能参加贵校的保研面试！";
+      "各位老师好，我叫刘子俊，来自微电子科学与工程专业。在本科期间我GPA 3.69，专业排名前14%，主持过一项国家级大创，并作为主力荣获集创赛企业大奖全国第一名、嵌赛FPGA全国一等奖、机器人大赛全国一等奖。主攻芯片底层硬件加速与软硬件协同。非常荣幸参加面试！";
     updateCharCount(introTextarea, "intro-char-count");
   });
 
   document.getElementById("btn-preset-en").addEventListener("click", () => {
     introTextarea.value =
-      "Good morning, distinguished professors. My name is Li Hua, majoring in Software Engineering. Throughout my undergraduate study, I maintained top academic standing and developed a strong passion for artificial intelligence. I am eager to pursue my master's degree in your prestigious laboratory.";
+      "Good morning distinguished professors. My name is Liu Zijun, majoring in Microelectronics Science and Engineering. I have a solid foundation in semiconductor physics and IC design, with three national first prizes including the National IC Innovation Competition. I am eager to pursue my master's degree in your laboratory.";
     updateCharCount(introTextarea, "intro-char-count");
   });
 
@@ -128,7 +128,7 @@ function setupEventListeners() {
   // 6. 重播自我介绍考官引导原声
   document.getElementById("btn-replay-intro-audio").addEventListener("click", () => {
     playInterviewerVoice(
-      "同学你好，欢迎参加本次保研面试！请先向在座各位老师进行自我介绍。",
+      "同学注意把控时间！今天我们已经面试了几十名考生，不要讲空话套话。请直接用最精炼的语言，汇报你的核心硬核竞争力与科研实践成果！",
       document.getElementById("intro-avatar"),
       document.getElementById("intro-speaking-status")
     );
@@ -215,15 +215,15 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
   if (avatarEl) avatarEl.classList.add("speaking");
   if (statusEl) {
     statusEl.innerHTML = `
-      <span>考官口头提问中...</span>
+      <span>⚡ 严肃考官发问中 (语速紧凑)...</span>
       <span class="voice-wave-container">
-        <span class="wave-bar"></span>
-        <span class="wave-bar"></span>
-        <span class="wave-bar"></span>
-        <span class="wave-bar"></span>
+        <span class="wave-bar" style="background: #ef4444;"></span>
+        <span class="wave-bar" style="background: #ef4444;"></span>
+        <span class="wave-bar" style="background: #ef4444;"></span>
+        <span class="wave-bar" style="background: #ef4444;"></span>
       </span>
     `;
-    statusEl.style.color = "#2563eb";
+    statusEl.style.color = "#dc2626";
   }
 
   // 优先通过后端高质量神经网络人声接口播放
@@ -234,8 +234,8 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
   const onPlaybackDone = () => {
     if (avatarEl) avatarEl.classList.remove("speaking");
     if (statusEl) {
-      statusEl.innerHTML = `<span>提问完毕，请作答 ✍️</span>`;
-      statusEl.style.color = "#059669";
+      statusEl.innerHTML = `<span>⏱️ 提问完毕，请直接作答核心要点（切勿绕弯子）</span>`;
+      statusEl.style.color = "#047857";
     }
     state.currentAudio = null;
   };
@@ -244,12 +244,12 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
 
   audio.onerror = () => {
     console.warn("服务端音频加载遇到问题，降级为浏览器本地 SpeechSynthesis 引擎");
-    // 降级使用浏览器的 SpeechSynthesis
+    // 降级使用浏览器的 SpeechSynthesis (语速同样加快 1.25)
     if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       const isEn = /[a-zA-Z]{5,}/.test(text);
       utterance.lang = isEn ? "en-US" : "zh-CN";
-      utterance.rate = 1.0;
+      utterance.rate = 1.25;
       utterance.onend = onPlaybackDone;
       utterance.onerror = onPlaybackDone;
       window.speechSynthesis.speak(utterance);
@@ -379,7 +379,7 @@ async function startInterview() {
 
     // 自动播放主考官开场问候与引导
     playInterviewerVoice(
-      "同学你好，欢迎参加本次保研面试！请先向在座各位老师进行自我介绍。",
+      "同学注意把控时间！今天我们已经面试了几十名考生，不要讲空话套话。请直接用最精炼的语言，汇报你的核心硬核竞争力与科研实践成果！",
       document.getElementById("intro-avatar"),
       document.getElementById("intro-speaking-status")
     );
