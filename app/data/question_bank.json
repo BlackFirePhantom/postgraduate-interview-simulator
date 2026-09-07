@@ -3281,6 +3281,221 @@
     ]
   },
   {
+    "id": "eng_life_11",
+    "category": "english",
+    "subcategory": "Food & Cooking",
+    "question": "Can you cook, and what is your favorite dish to make or eat? Could you tell us a little bit about it?",
+    "tips": [
+      "Cooking abilities or favorite local dish (e.g. Hubei lotus root rib soup or homemade noodles)",
+      "How preparing food or eating with family/friends brings joy and relaxation",
+      "Nutritional balance and self-care away from home"
+    ],
+    "reference_answer": "Yes, I enjoy cooking simple and nutritious meals. My favorite dish is Hubei-style lotus root and pork rib soup, a specialty from my home province. Cooking teaches me patience, as simmering the soup slowly brings out its rich, sweet flavor. Enjoying a warm bowl of soup with family or roommates is one of my favorite ways to unwind and take good care of my health.",
+    "keywords": [
+      "cooking",
+      "lotus root",
+      "rib soup",
+      "favorite dish",
+      "patience",
+      "nutritious",
+      "unwind",
+      "self-care"
+    ]
+  },
+  {
+    "id": "eng_life_12",
+    "category": "english",
+    "subcategory": "Travel & Exploration",
+    "question": "Do you like traveling? Could you tell us about a memorable trip you took or a place you would love to visit?",
+    "tips": [
+      "A specific trip (e.g. hiking Yuelu Mountain, visiting historical sites, or natural parks)",
+      "What impressed you most (scenery, local culture, historical atmosphere)",
+      "How traveling broadens your worldview"
+    ],
+    "reference_answer": "I love traveling because it broadens my horizons. A memorable trip was visiting Changsha, where I climbed Yuelu Mountain and walked across Orange Isle. Standing by the Xiang River and visiting Yuelu Academy gave me a deep appreciation for classical Chinese culture and modern urban vibrancy. Traveling allows me to step out of my daily bubble and return with renewed energy.",
+    "keywords": [
+      "traveling",
+      "Yuelu Mountain",
+      "Changsha",
+      "culture",
+      "horizons",
+      "scenery",
+      "vibrancy",
+      "memorable trip"
+    ]
+  },
+  {
+    "id": "eng_life_13",
+    "category": "english",
+    "subcategory": "Friendship & Socializing",
+    "question": "How do you usually get along with people from diverse backgrounds, and what qualities do you value most in a good friend?",
+    "tips": [
+      "Qualities valued in friendship (sincerity, empathy, trustworthiness, mutual support)",
+      "How to communicate openly and respect diverse viewpoints",
+      "An example of maintaining strong friendships in college"
+    ],
+    "reference_answer": "In friendships, I value sincerity, empathy, and mutual support above all else. When meeting people from different regions or backgrounds, I always approach them with an open mind and respect their perspectives. A true friend is someone you can celebrate victories with, but also lean on during tough times. Maintaining honest and generous communication is key to building lifelong friendships.",
+    "keywords": [
+      "friendship",
+      "sincerity",
+      "empathy",
+      "trustworthiness",
+      "mutual support",
+      "open mind",
+      "communication"
+    ]
+  },
+  {
+    "id": "eng_life_14",
+    "category": "english",
+    "subcategory": "Music & Arts",
+    "question": "What role does music or art play in your daily life? Do you have any favorite genres or artists?",
+    "tips": [
+      "Favorite music genres (e.g. classical, acoustic folk, pop, instrumental)",
+      "When and why you listen (while coding, relaxing, commuting)",
+      "How music uplifts your mood and sparks creativity"
+    ],
+    "reference_answer": "Music is an indispensable part of my daily routine. I especially love listening to acoustic guitar and instrumental soundtracks. When I am working on complex tasks, light ambient music helps me enter a flow state and stay concentrated. In the evening, soft melodies help me soothe mental tension and reflect on the day. Music brings emotional color and calm into my engineering life.",
+    "keywords": [
+      "music",
+      "instrumental",
+      "acoustic",
+      "flow state",
+      "relax",
+      "tension",
+      "creativity",
+      "mindfulness"
+    ]
+  },
+  {
+    "id": "eng_life_15",
+    "category": "english",
+    "subcategory": "Volunteering & Community",
+    "question": "Have you ever participated in any volunteer work or community service during your college years? What did you gain from it?",
+    "tips": [
+      "Volunteer experiences (welcoming freshmen, campus environmental drives, library assistant)",
+      "Teamwork and communication skills gained",
+      "Sense of social responsibility and personal fulfillment"
+    ],
+    "reference_answer": "During my sophomore year, I volunteered to welcome new freshmen and guide them through dorm registrations and campus tours. It was tiring under the summer heat, but answering their questions and easing their parents' worries gave me great satisfaction. That experience strengthened my communication skills and reinforced my belief that giving back to the community is deeply rewarding.",
+    "keywords": [
+      "volunteer",
+      "community service",
+      "freshmen",
+      "giving back",
+      "responsibility",
+      "communication",
+      "satisfaction"
+    ]
+  },
+  {
+    "id": "eng_life_16",
+    "category": "english",
+    "subcategory": "Overcoming Setbacks",
+    "question": "Life doesn't always go as planned. Could you tell us about a small failure or disappointment you experienced and how you bounced back?",
+    "tips": [
+      "A genuine, relatable life setback (e.g. losing a sports match or failing a driving test)",
+      "Constructive attitude: acknowledging emotions without being defeated",
+      "The lesson learned and resulting growth"
+    ],
+    "reference_answer": "In my freshman year, our dorm basketball team lost a match by just one point in the closing seconds. We were disappointed initially, but instead of blaming each other, we gathered to analyze our defense mistakes and practiced harder together. That setback taught me that temporary failures are the best feedback for growth. Developing a resilient mindset matters far more than avoiding every stumble.",
+    "keywords": [
+      "setback",
+      "disappointment",
+      "basketball",
+      "resilience",
+      "bounced back",
+      "growth mindset",
+      "lesson learned"
+    ]
+  },
+  {
+    "id": "eng_life_17",
+    "category": "english",
+    "subcategory": "Curiosity & Self-Learning",
+    "question": "Have you learned any new hobby or practical skill on your own recently? What motivated you to learn it?",
+    "tips": [
+      "A self-taught skill (e.g. photography, video editing, swimming, a musical instrument)",
+      "Overcoming early learning curves",
+      "The joy of self-driven curiosity and mastery"
+    ],
+    "reference_answer": "Recently, I taught myself basic smartphone photography and photo composition. I wanted to capture the fleeting moments of campus life and nature before graduation. Learning how light, contrast, and angles work was challenging at first, but seeing my pictures improve was immensely fulfilling. It reminded me that staying curious about new everyday skills keeps life vibrant and fresh.",
+    "keywords": [
+      "self-learning",
+      "photography",
+      "curiosity",
+      "composition",
+      "practical skill",
+      "fulfilling",
+      "vibrant"
+    ]
+  },
+  {
+    "id": "eng_life_18",
+    "category": "english",
+    "subcategory": "Daily Energy Management",
+    "question": "Are you more of an early bird or a night owl? How do you maintain high energy throughout a demanding day?",
+    "tips": [
+      "Circadian preference (early bird / night owl)",
+      "Strategies for steady energy (proper hydration, power naps, regular exercise)",
+      "Aligning high-focus tasks with peak energy hours"
+    ],
+    "reference_answer": "I consider myself an early bird. I feel most creative and alert in the morning between 8:30 and 11:30 a.m., so I always reserve that window for my most demanding tasks. In the afternoon, a short 20-minute power nap completely restores my focus. Coupled with regular running and staying well-hydrated, I am able to sustain consistent mental stamina throughout demanding days.",
+    "keywords": [
+      "early bird",
+      "stamina",
+      "power nap",
+      "peak energy",
+      "alert",
+      "focused",
+      "healthy routine"
+    ]
+  },
+  {
+    "id": "eng_life_19",
+    "category": "english",
+    "subcategory": "Seasons & Campus Life",
+    "question": "Which season of the year do you like the most, and why? How is that season on your university campus?",
+    "tips": [
+      "Favorite season (e.g. autumn with golden ginkgo leaves, or spring with blooming flowers)",
+      "Campus scenery and pleasant atmosphere",
+      "Personal activities enjoyed during that season"
+    ],
+    "reference_answer": "Autumn is undoubtedly my favorite season. The scorching summer heat fades away, and the weather turns crisp and clear. On our campus, the ginkgo trees along the main boulevard turn golden yellow, creating a picturesque golden carpet. It is the best time of the year for evening jogs and reading outdoors on campus benches, filling me with a sense of peace and inspiration.",
+    "keywords": [
+      "autumn",
+      "season",
+      "ginkgo trees",
+      "campus",
+      "crisp weather",
+      "scenery",
+      "jogging",
+      "inspiration"
+    ]
+  },
+  {
+    "id": "eng_life_20",
+    "category": "english",
+    "subcategory": "Life Philosophy & Fulfillment",
+    "question": "Looking beyond academic achievements, what does a fulfilling and happy life mean to you personally?",
+    "tips": [
+      "Core personal values: physical health, loving relationships, giving back",
+      "Inner peace and lifelong curiosity",
+      "Warm, authentic conclusion"
+    ],
+    "reference_answer": "To me, a fulfilling life is built on good health, loving family bonds, and sincere friendships. While academic and professional achievements are important, true happiness comes from staying kind, curious, and grateful every day. Being able to contribute positive value to the people around me and having the passion to learn something new every day is my definition of a meaningful life.",
+    "keywords": [
+      "fulfilling life",
+      "happiness",
+      "health",
+      "family bonds",
+      "curiosity",
+      "kindness",
+      "gratitude",
+      "positive value"
+    ]
+  },
+  {
     "id": "eng_paper_01",
     "category": "english",
     "subcategory": "Paper Reading Methodology",
