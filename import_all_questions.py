@@ -200,112 +200,160 @@ def parse_docx_general_questions():
 
 
 def parse_docx_english_questions():
-    """解析《英语口语/01_推免英语口语面试与专业问答全攻略.docx》并扩充专业英语"""
-    doc_path = BASE_DIR / "英语口语" / "01_推免英语口语面试与专业问答全攻略.docx"
-    questions = []
-    if doc_path.exists():
-        paras = read_docx_paragraphs(doc_path)
-        current_q = None
-        current_tips = []
-        current_ans = []
-
-        for p in paras:
-            q_match = re.match(r'^(Q\d+[\.、\s].*)', p)
-            if q_match:
-                if current_q:
-                    clean_q = clean_question_title(current_q)
-                    questions.append({
-                        "id": f"eng_doc_{len(questions)+1:02d}",
-                        "category": "english",
-                        "subcategory": "English Spoken & Academic",
-                        "question": clean_q,
-                        "tips": current_tips if current_tips else ["Speak fluently", "Accurate terms", "Clear structure"],
-                        "reference_answer": " ".join(current_ans)[:350],
-                        "keywords": extract_keywords_heuristic(clean_q + " " + " ".join(current_ans))
-                    })
-                current_q = q_match.group(1)
-                current_tips = []
-                current_ans = []
-            elif "🎯" in p or "💡" in p:
-                parts = re.split(r'[🎯💡]', p)
-                for part in parts:
-                    clean_p = part.strip()
-                    if clean_p:
-                        current_tips.append(clean_p[:80])
-            elif current_q and not p.startswith("【") and not p.startswith("―"):
-                current_ans.append(p)
-
-        if current_q:
-            clean_q = clean_question_title(current_q)
-            questions.append({
-                "id": f"eng_doc_{len(questions)+1:02d}",
-                "category": "english",
-                "subcategory": "English Spoken & Academic",
-                "question": clean_q,
-                "tips": current_tips if current_tips else ["Fluent expression", "Clear structure"],
-                "reference_answer": " ".join(current_ans)[:350],
-                "keywords": extract_keywords_heuristic(clean_q + " " + " ".join(current_ans))
-            })
-
-    # 补充专业英语与学术表达题单
-    supp_english = [
+    """生成口语化、纯生活与日常交流的高频保研英语面试真题"""
+    daily_english_questions = [
         {
-            "id": "eng_supp_01",
+            "id": "eng_life_01",
             "category": "english",
-            "subcategory": "Academic Motivation & Research",
-            "question": "Could you please explain why you decided to pursue a master's degree instead of directly finding a job in industry?",
-            "tips": ["Express passion for in-depth research", "Bridge gap between course foundations and cutting-edge silicon architecture", "Long-term vision"],
-            "reference_answer": "During my undergraduate study, I realized that while coursework provided broad foundational knowledge, solving cutting-edge chip design and hardware bottlenecks requires deep theoretical understanding. Pursuing a master's degree will allow me to immerse myself in advanced research and prepare for a high-level engineering and academic career.",
-            "keywords": ["postgraduate", "undergraduate", "research", "theoretical", "in-depth", "career"]
+            "subcategory": "Hometown & Living",
+            "question": "Could you tell us a bit about your hometown? What do you like most about living or growing up there?",
+            "tips": [
+                "Geographical location and climate",
+                "Famous attractions or local culture (e.g. Macheng's Azaleas or local delicacies)",
+                "Personal emotional connection and warmth"
+            ],
+            "reference_answer": "I come from Macheng, a historic and picturesque city in northeastern Hubei Province. What I love most about my hometown is its natural beauty and warm community atmosphere. Every spring, millions of red azaleas bloom across the Guifeng Mountain, which is breathtaking. The local cuisine is delightful, and the people are kind and hospitable, which deeply shaped my optimistic personality.",
+            "keywords": [
+                "hometown", "Macheng", "natural beauty", "azalea", "cuisine", "culture", "growing up", "community"
+            ]
         },
         {
-            "id": "eng_supp_02",
+            "id": "eng_life_02",
             "category": "english",
-            "subcategory": "Research Interest",
-            "question": "What specific research direction in integrated circuits and electronic engineering interests you the most, and why?",
-            "tips": ["Mention specific areas (e.g., FPGA hardware accelerator, SoC design, analog CMOS, PUF security)", "Connect with undergraduate experience"],
-            "reference_answer": "I am deeply interested in domain-specific hardware accelerators and energy-efficient SoC architecture. In my undergraduate competition, our team customized an FPGA regression accelerator, which showed me the immense power of hardware-software co-design in breaking memory walls and compute bottlenecks.",
-            "keywords": ["hardware accelerator", "SoC", "FPGA", "co-design", "energy-efficient"]
+            "subcategory": "Hobbies & Leisure",
+            "question": "What do you usually enjoy doing in your spare time or on weekends to relax?",
+            "tips": [
+                "Specific hobbies (e.g. running, playing badminton, music, reading)",
+                "Why you enjoy it and how it helps you recharge",
+                "Balance between study and daily life"
+            ],
+            "reference_answer": "In my spare time, I am a big fan of outdoor sports, especially running and playing badminton. Regular running helps me build physical stamina, clear my head, and release stress after a long day of intense mental work. On weekends, I also enjoy listening to acoustic music or reading science fiction, which broadens my imagination and keeps me energized.",
+            "keywords": [
+                "spare time", "running", "badminton", "stamina", "release stress", "music", "weekends", "relax"
+            ]
         },
         {
-            "id": "eng_supp_03",
+            "id": "eng_life_03",
             "category": "english",
-            "subcategory": "Technical English",
-            "question": "Could you explain the difference between FPGA and ASIC in English, especially regarding cost, performance, and development turnaround?",
-            "tips": ["NRE cost vs unit cost", "Reconfigurability and flexibility", "Clock speed, area, and power consumption"],
-            "reference_answer": "FPGA offers reconfigurability, zero NRE cost, and rapid development turnaround, making it ideal for prototyping and low-to-medium volume deployment. In contrast, ASIC requires high NRE costs and long tapeout cycles, but delivers superior performance, minimal silicon area, and the lowest power consumption at massive volumes.",
-            "keywords": ["FPGA", "ASIC", "reconfigurability", "NRE", "prototyping", "turnaround", "power consumption"]
+            "subcategory": "Stress Relief & Health",
+            "question": "When you feel stressed or exhausted in daily life, how do you usually adjust your mood and unwind?",
+            "tips": [
+                "Acknowledge stress as a natural part of daily life",
+                "Practical coping habits (sports, listening to music, talking with close friends)",
+                "Maintaining emotional resilience and good sleep"
+            ],
+            "reference_answer": "Whenever I feel high pressure or mental fatigue, I usually step back rather than pushing myself blindly. I enjoy going for a 5-kilometer run on the campus playground; sweating it out always restores my mental clarity. I also like chatting with family or friends over a good meal to gain fresh perspectives. Staying calm and maintaining regular sleep helps me bounce back quickly.",
+            "keywords": [
+                "stressed", "unwind", "running", "mental clarity", "family", "friends", "resilience", "positive mindset"
+            ]
         },
         {
-            "id": "eng_supp_04",
+            "id": "eng_life_04",
             "category": "english",
-            "subcategory": "Academic English",
-            "question": "Can you introduce one of your major undergraduate projects or competitions in English, highlighting your personal contribution?",
-            "tips": ["STAR framework: Situation, Task, Action, Result", "Specific module you designed", "Quantifiable metrics"],
-            "reference_answer": "In the National Integrated Circuit Innovation Competition, my team designed a customized FPGA hardware accelerator on an Intel Cyclone V SoC. I was responsible for RTL implementation of the batch DMA controller and hardware regression pipeline, improving end-to-end detection throughput by 3.2 times.",
-            "keywords": ["STAR", "Intel Cyclone", "RTL", "throughput", "DMA", "hardware accelerator"]
+            "subcategory": "Campus Life",
+            "question": "Could you share a memorable or interesting daily experience from your college life outside the classroom?",
+            "tips": [
+                "Non-academic campus event (e.g. sports festival, dorm camaraderie, volunteer activities)",
+                "What happened and what you learned from it",
+                "Warm and engaging conversational tone"
+            ],
+            "reference_answer": "A very memorable experience was participating in our university's annual sports festival as a relay runner for our department team. We trained together every evening after class for two weeks. Although we faced strong opponents, our team spirit and seamless baton handover earned us second place. That experience taught me the true joy of companionship, trust, and collective effort in daily college life.",
+            "keywords": [
+                "college life", "sports festival", "team spirit", "companionship", "relay runner", "memorable", "experience"
+            ]
         },
         {
-            "id": "eng_supp_05",
+            "id": "eng_life_05",
             "category": "english",
-            "subcategory": "Problem Solving & Stress",
-            "question": "How do you handle severe academic stress or debugging obstacles during long-term research?",
-            "tips": ["Systematic debugging methodology", "Healthy sports or hobbies to refresh mind", "Communication with advisors"],
-            "reference_answer": "When facing difficult debugging bottlenecks, I first step back and break down the problem methodically using waveforms and isolation tests. Outside the lab, I relieve stress through running and playing badminton, which helps me clear my mind and return with fresh perspectives.",
-            "keywords": ["debugging", "methodical", "stress", "isolation test", "running", "resilience"]
+            "subcategory": "Personality & Self-Awareness",
+            "question": "How would your close friends or roommates describe your personality in daily life?",
+            "tips": [
+                "2-3 key positive traits (e.g. reliable, patient, easy-going, optimistic)",
+                "A concrete everyday example (e.g. organizing dorm trips, helping peers)",
+                "Self-awareness and good interpersonal skills"
+            ],
+            "reference_answer": "My roommates would describe me as reliable, patient, and easy-going. Whenever we plan a trip or dorm activity, they usually trust me to coordinate the itinerary because I am detail-oriented and organized. At the same time, they know I have a good sense of humor and can always lighten the mood when someone is feeling down. I am a patient listener and value sincere friendships.",
+            "keywords": [
+                "roommates", "friends", "personality", "reliable", "patient", "easy-going", "organized", "sense of humor"
+            ]
         },
         {
-            "id": "eng_supp_06",
+            "id": "eng_life_06",
             "category": "english",
-            "subcategory": "Future Plan",
-            "question": "What is your academic and career plan for your three years of master's study?",
-            "tips": ["Year 1: coursework and paper reading", "Year 2: project and tapeout / publication", "Year 3: thesis and career choice"],
-            "reference_answer": "In the first year, I plan to solidify advanced coursework and read top conference literature in our field. In the second year, I will focus on research projects, striving for chip tapeout and high-quality conference publication. In the third year, I aim to complete my master's dissertation with high academic standards.",
-            "keywords": ["coursework", "literature", "tapeout", "conference", "dissertation"]
+            "subcategory": "Reading & Entertainment",
+            "question": "Do you have a favorite book, movie, or documentary? Could you briefly tell us what impressed you most about it?",
+            "tips": [
+                "Name of the book, movie, or documentary",
+                "Core message or most touching scene",
+                "Personal inspiration for your daily attitude towards life"
+            ],
+            "reference_answer": "One of my favorite books is 'The Three-Body Problem' by Liu Cixin. Beyond its dazzling cosmic imagination, what impressed me most is the persistent human spirit in the face of immense uncertainty and challenges. It taught me to stay curious about the unknown and remain humble and resilient in front of complex problems, which deeply inspires my everyday attitude towards life.",
+            "keywords": [
+                "favorite book", "The Three-Body Problem", "imagination", "curiosity", "resilience", "human spirit", "movie"
+            ]
+        },
+        {
+            "id": "eng_life_07",
+            "category": "english",
+            "subcategory": "Daily Routine & Habits",
+            "question": "What does a typical day look like for you, and how do you organize your daily schedule?",
+            "tips": [
+                "Morning routine and regularity",
+                "Balancing study, exercise, and rest",
+                "Use of planning tools (to-do lists, notebook)"
+            ],
+            "reference_answer": "On a typical day, I usually get up around 7:30 a.m. and start with a nutritious breakfast. I like to write down three top priorities in my notebook for the day to keep myself focused. The daytime is dedicated to classes and productive work, while evenings are reserved for exercise and light reading. Going to bed around 11:30 p.m. ensures I stay energized and healthy every single day.",
+            "keywords": [
+                "typical day", "routine", "priorities", "notebook", "exercise", "focused", "healthy habit"
+            ]
+        },
+        {
+            "id": "eng_life_08",
+            "category": "english",
+            "subcategory": "City & Campus Living",
+            "question": "What is your impression of this city, and how do you feel about living and studying here for your master's life?",
+            "tips": [
+                "City's culture, food, climate, and pace of living",
+                "Campus atmosphere and facilities",
+                "Enthusiasm for starting a fresh chapter of life here"
+            ],
+            "reference_answer": "I have a wonderful impression of this city. It combines profound cultural heritage with modern vitality and convenience. The campus environment here is beautiful and full of youthful energy, while the local cuisine and cultural life are rich and welcoming. I am truly looking forward to spending the next few years living here, exploring the city, and creating wonderful memories.",
+            "keywords": [
+                "impression", "city", "vitality", "culture", "campus", "welcoming", "living", "memories"
+            ]
+        },
+        {
+            "id": "eng_life_09",
+            "category": "english",
+            "subcategory": "Role Model & Influence",
+            "question": "Is there a person who has greatly inspired or influenced you in your personal life?",
+            "tips": [
+                "Can be a family member, teacher, or personal mentor",
+                "Specific qualities (e.g. dedication, patience, integrity, optimism)",
+                "How their example shapes your daily actions and values"
+            ],
+            "reference_answer": "My grandfather has had the greatest influence on my life. As a retired teacher, he was always disciplined, humble, and passionately curious about the world. He taught me that true fulfillment comes from staying honest, patient, and dedicated to what you love every single day. His calm wisdom always gives me strength whenever I face obstacles.",
+            "keywords": [
+                "inspired", "influence", "grandfather", "teacher", "disciplined", "humble", "patience", "integrity"
+            ]
+        },
+        {
+            "id": "eng_life_10",
+            "category": "english",
+            "subcategory": "Work-Life Balance",
+            "question": "As a prospective graduate student, how do you plan to maintain a healthy work-life balance during your postgraduate years?",
+            "tips": [
+                "Importance of physical and mental wellbeing",
+                "Setting clear boundaries between study and leisure",
+                "Participating in sports and socializing to avoid burnout"
+            ],
+            "reference_answer": "I believe high academic efficiency comes from a balanced lifestyle. During my graduate years, I will adhere to regular physical exercise, such as playing basketball or jogging three times a week, to keep my energy high. I also plan to actively communicate with fellow lab mates and participate in campus activities. Keeping a clear boundary between intensive work and restorative rest ensures sustainable personal growth.",
+            "keywords": [
+                "work-life balance", "lifestyle", "exercise", "mental health", "efficiency", "restorative", "sustainable"
+            ]
         }
     ]
-    questions.extend(supp_english)
-    return questions
+    return daily_english_questions
 
 
 def parse_academic_docx_files():
