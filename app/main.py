@@ -61,7 +61,14 @@ async def root():
     """主页直接提供给手机端与桌面端访问"""
     index_file = STATIC_DIR / "index.html"
     if index_file.exists():
-        return FileResponse(str(index_file))
+        return FileResponse(
+            str(index_file),
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     return {"message": f"欢迎使用 {settings.APP_NAME}，静态页面正在构建中。"}
 
 

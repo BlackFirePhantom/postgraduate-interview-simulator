@@ -13,5 +13,6 @@ services:
       - QUESTIONS_PER_STAGE=2
       - DEBUG=false
     volumes:
-      # 挂载题库目录，支持在宿主机直接修改或扩充 question_bank.json，无需重新构建镜像
-      - ./app/data:/app/app/data
+      # 挂载整个应用目录，支持在宿主机直接修改或 git pull 代码与题库，重启即可生效而无需重新构建
+      - ./app:/app/app
+
