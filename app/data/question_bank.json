@@ -3279,5 +3279,89 @@
       "restorative",
       "sustainable"
     ]
+  },
+  {
+    "id": "eng_paper_01",
+    "category": "english",
+    "subcategory": "Paper Reading Methodology",
+    "question": "How do you usually read an English research paper? Could you share your reading process or habits when dealing with complex academic articles?",
+    "tips": [
+      "Three-pass reading strategy: title/abstract/conclusion -> figures & architecture -> detailed methodology",
+      "How to handle unfamiliar technical vocabulary without interrupting reading flow",
+      "Taking structured notes (e.g. using Zotero, Notion, or paper summaries)"
+    ],
+    "reference_answer": "When reading an English paper, I usually adopt a structured three-pass approach. First, I carefully read the title, abstract, and conclusion to understand the core research problem and major contributions. Second, I look through all the diagrams, tables, and system architectures, which give me an intuitive grasp of their methodology. Finally, I dive into the implementation details. I also use reference managers like Zotero to highlight key insights and annotate recurring academic phrases.",
+    "keywords": [
+      "English paper",
+      "three-pass",
+      "abstract",
+      "conclusion",
+      "methodology",
+      "architecture",
+      "Zotero",
+      "structured notes"
+    ]
+  },
+  {
+    "id": "eng_paper_02",
+    "category": "english",
+    "subcategory": "Literature Search & Tracking",
+    "question": "Where do you typically search for literature, and how do you keep up with the latest international research progress in your field?",
+    "tips": [
+      "Academic databases and platforms (IEEE Xplore, Google Scholar, arXiv)",
+      "Following top-tier international conferences in your domain (e.g. ISSCC, DAC, FPGA, ISCA)",
+      "Habit of reading survey/review papers to grasp overall research landscapes"
+    ],
+    "reference_answer": "I mainly use IEEE Xplore and Google Scholar to retrieve peer-reviewed literature, and arXiv to track preprints. In the field of integrated circuits and hardware acceleration, I pay close attention to top conferences like ISSCC, DAC, and FPGA. When entering a new research topic, I always start with high-impact survey papers to establish a comprehensive big-picture understanding before drilling down into specific state-of-the-art designs.",
+    "keywords": [
+      "IEEE Xplore",
+      "Google Scholar",
+      "arXiv",
+      "literature search",
+      "top conferences",
+      "survey papers",
+      "state-of-the-art"
+    ]
+  },
+  {
+    "id": "eng_paper_03",
+    "category": "english",
+    "subcategory": "Impressive Paper Discussion",
+    "question": "Could you briefly introduce an English research paper that impressed you the most, and tell us what you learned from it?",
+    "tips": [
+      "Paper topic and key contribution (e.g. Google's TPU architecture paper or a domain-specific accelerator review)",
+      "The specific bottleneck it solved (e.g. memory wall, compute efficiency, hardware-software co-design)",
+      "Personal reflection and academic takeaway"
+    ],
+    "reference_answer": "One paper that left a deep impression on me is the classic TPU architecture paper by Norm Jouppi's team published at ISCA. What fascinated me most was how they tailored the matrix multiplication unit with a systolic array architecture, achieving order-of-magnitude improvements in energy efficiency over conventional CPUs and GPUs. It inspired me deeply because it proved that breakthroughs in domain-specific hardware accelerators come from tight co-design with workload characteristics.",
+    "keywords": [
+      "TPU",
+      "systolic array",
+      "hardware accelerator",
+      "matrix multiplication",
+      "ISCA",
+      "energy efficiency",
+      "co-design"
+    ]
+  },
+  {
+    "id": "eng_paper_04",
+    "category": "english",
+    "subcategory": "Academic English & Writing",
+    "question": "What are the biggest challenges you face when reading or writing academic English, and how do you plan to enhance your academic writing skills in graduate school?",
+    "tips": [
+      "Honest self-assessment (e.g. specialized terminology and concise sentence structures)",
+      "Actionable improvement plans (reading high-level literature daily, building an academic phrase bank)",
+      "Writing practice (revising thesis drafts, actively participating in group paper seminars)"
+    ],
+    "reference_answer": "My main challenge currently lies in concise academic expression and transitioning from passive reading to active academic writing. To overcome this, I am actively building my personal academic phrase bank by noting down standard transition phrases from high-impact IEEE journals. In graduate school, I plan to write weekly literature summaries, present regularly in lab seminars, and draft workshop papers to systematically polish my academic writing under advisor guidance.",
+    "keywords": [
+      "academic writing",
+      "concise expression",
+      "phrase bank",
+      "IEEE journals",
+      "literature summaries",
+      "lab seminars"
+    ]
   }
 ]
