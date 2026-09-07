@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>保研面试模拟系统</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="mobile-wrapper">
+  <!-- 顶部状态栏 -->
+  <header class="app-header">
+    <div class="header-title">
+      <span>🎓</span>
+      <span>保研面试模拟</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button type="button" id="btn-toggle-voice" class="action-btn" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 14px; background: #eff6ff; border-color: #93c5fd; color: #1e40af;">
+        🔊 考官原声: 开
+      </button>
+      <div id="stage-badge" class="stage-badge">准备中</div>
+    </div>
+  </header>
+
+  <!-- 阶段进度条 -->
+  <div class="progress-container">
+    <div class="progress-track">
+      <div id="progress-bar" class="progress-bar"></div>
+    </div>
+    <div class="progress-steps">
+      <span>自我介绍</span>
+      <span id="step-label-1">阶段一</span>
+      <span id="step-label-2">阶段二</span>
+      <span id="step-label-3">阶段三</span>
+      <span>终审</span>
+    </div>
+  </div>
+
+  <!-- 内容区域 -->
+  <main class="content-area">
+
+    <!-- 1. 欢迎开屏界面 -->
+    <div id="view-welcome" style="display: flex; flex-direction: column; height: 100%;">
+      <div style="text-align: center; margin: 24px 0 16px 0;">
+        <div style="font-size: 3.2rem; margin-bottom: 8px;">🧑‍🏫</div>
+        <h2 style="font-size: 1.35rem; margin: 0 0 6px 0; color: #1e3a8a;">保研模拟面试系统</h2>
+        <p style="font-size: 0.85rem; color: #64748b; margin: 0;">专业问题 · 英语表达 · 综合素质</p>
+      </div>
+
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px; margin-bottom: 18px; font-size: 0.85rem; line-height: 1.5; color: #1e40af;">
+        <strong>💡 智能自适应机制：</strong><br>
+        系统将根据你的<strong>自我介绍是以中文还是英文开始</strong>自动动态规划提问路线：
+        <ul style="margin: 6px 0 0 16px; padding: 0;">
+          <li><strong>中文开场：</strong>优先切入一般综合问题或专业技术题，最后考察英语。</li>
+          <li><strong>英文开场：</strong>优先切入英语交流与学术英语题，随后考察专业与综合。</li>
+        </ul>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 24px;">
+        <label style="font-size: 0.88rem; font-weight: 600; color: #334155; display: block; margin-bottom: 8px;">
+          每个阶段抽取题数：
+        </label>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="action-btn q-count-btn" data-count="1" style="flex: 1;">每阶段 1 题 (速测)</button>
+          <button type="button" class="action-btn q-count-btn active" data-count="2" style="flex: 1; border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; font-weight: 600;">每阶段 2 题 (标准)</button>
+        </div>
+      </div>
+
+      <div style="margin-top: auto; padding-bottom: 16px;">
+        <button id="btn-start-interview" class="btn-primary">进入考场 · 开始模拟面试</button>
+      </div>
+    </div>
+
+    <!-- 2. 自我介绍界面 -->
+    <div id="view-intro" style="display: none; flex-direction: column; height: 100%;">
+      <div class="interviewer-box">
+        <div id="intro-avatar" class="avatar speaking">博</div>
+        <div class="speech-bubble">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <strong style="font-size: 0.85rem; color: #1e3a8a;">主考官 (教授)</strong>
+            <span id="intro-speaking-status" style="font-size: 0.72rem; color: #2563eb; display: flex; align-items: center;">
+              <span>考官引导中...</span>
+              <span class="voice-wave-container">
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+              </span>
+            </span>
+          </div>
+          <div style="font-size: 0.95rem; line-height: 1.5; color: #1e293b;">
+            同学你好，欢迎参加本次保研面试！请先向在座各位老师进行<strong>自我介绍</strong>（中英文皆可，请自然作答）。
+          </div>
+          <div style="margin-top: 8px;">
+            <button type="button" id="btn-replay-intro-audio" class="action-btn tts-btn" style="font-size: 0.75rem; padding: 3px 8px;">
+              <span>🔁 重新播放引导语音</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" id="btn-preset-zh" class="action-btn" style="font-size: 0.75rem;">📝 填入中文介绍示例</button>
+        <button type="button" id="btn-preset-en" class="action-btn" style="font-size: 0.75rem;">📝 填入英文介绍示例</button>
+      </div>
+
+      <div class="answer-section">
+        <textarea id="intro-textarea" class="textarea-box" placeholder="在此输入你的自我介绍，或点击下方麦克风语音录入..."></textarea>
+        
+        <div class="input-toolbar">
+          <button type="button" id="btn-intro-mic" class="mic-btn">
+            <span>🎤</span>
+            <span id="intro-mic-label">语音录入</span>
+          </button>
+          <span style="font-size: 0.75rem; color: #94a3b8;" id="intro-char-count">0 字</span>
+        </div>
+
+        <button id="btn-submit-intro" class="btn-primary" style="margin-top: 8px;">提交自我介绍</button>
+      </div>
+    </div>
+
+    <!-- 3. 提问与作答核心界面 -->
+    <div id="view-question" style="display: none; flex-direction: column; height: 100%;">
+      <!-- 面试官提问气泡与沉浸式声波 -->
+      <div class="interviewer-box" style="margin-bottom: 12px;">
+        <div id="question-avatar" class="avatar speaking">师</div>
+        <div class="speech-bubble">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong id="interviewer-role-name" style="font-size: 0.85rem; color: #1e3a8a;">考官提问</strong>
+            <span id="question-speaking-status" style="font-size: 0.72rem; color: #2563eb; display: flex; align-items: center;">
+              <span id="speaking-text">正在口头提问...</span>
+              <span class="voice-wave-container">
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+              </span>
+            </span>
+          </div>
+
+          <div id="question-text" class="question-text">
+            加载题目中...
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+            <button type="button" id="btn-replay-audio" class="action-btn tts-btn" style="font-size: 0.78rem; padding: 4px 10px;">
+              <span>🔁</span>
+              <span>重新听考官提问</span>
+            </button>
+            <span style="font-size: 0.7rem; color: #94a3b8;">高保真考官人声</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 题目分类标签与题号 -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
+        <div>
+          <span id="question-category-badge" class="badge-tag badge-academic">专业问题</span>
+          <span id="question-subcategory" class="badge-sub" style="margin-left: 6px;">操作系统</span>
+        </div>
+        <span id="question-index-badge" style="font-size: 0.75rem; font-weight: 600; color: #64748b;">第 1/6 题</span>
+      </div>
+
+      <!-- 答题提示抽屉（可折叠） -->
+      <div class="tips-accordion">
+        <div id="tips-toggle" class="tips-header">
+          <span>💡 答题思考要点提示 (可点击查看)</span>
+          <span id="tips-arrow">▼</span>
+        </div>
+        <div id="tips-body" class="tips-content" style="display: none;">
+          <ul id="tips-list" style="margin: 0; padding-left: 18px;"></ul>
+        </div>
+      </div>
+
+      <!-- 作答区域 -->
+      <div class="answer-section">
+        <textarea id="answer-textarea" class="textarea-box" placeholder="在此输入你的回答要点或论述，支持语音转文字输入..."></textarea>
+        
+        <div class="input-toolbar">
+          <button type="button" id="btn-answer-mic" class="mic-btn">
+            <span>🎤</span>
+            <span id="answer-mic-label">语音录入</span>
+          </button>
+          <span style="font-size: 0.75rem; color: #94a3b8;" id="answer-char-count">0 字</span>
+        </div>
+
+        <button id="btn-submit-answer" class="btn-primary" style="margin-top: 8px;">提交本题回答</button>
+      </div>
+    </div>
+
+    <!-- 4. 终审与评估报告界面 -->
+    <div id="view-report" style="display: none; flex-direction: column;">
+      <div style="text-align: center; margin: 16px 0;">
+        <div style="font-size: 3rem; margin-bottom: 4px;">📋</div>
+        <h3 style="margin: 0 0 6px 0; color: #1e3a8a;">保研模拟面试综合报告</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin: 0;">模拟面试全部完成，以下为在座专家考官评估结果</p>
+      </div>
+
+      <!-- 得分卡片 -->
+      <div class="report-card" style="text-align: center;">
+        <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">综合总评分</div>
+        <div class="score-badge">
+          <span id="report-avg-score">0</span>
+          <span class="score-unit">/100</span>
+        </div>
+        <div id="report-verdict" style="margin-top: 10px; font-size: 0.88rem; line-height: 1.5; color: #1e293b; background: #f8fafc; padding: 10px; border-radius: 8px; text-align: left;">
+          评语载入中...
+        </div>
+      </div>
+
+      <!-- 能力拆解卡片 -->
+      <div class="report-card">
+        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; color: #1e293b;">维度得分分解</div>
+
+        <div class="metric-row">
+          <span>📚 专业课综合</span>
+          <span id="score-academic" style="font-weight: 600;">- 分</span>
+        </div>
+        <div class="metric-bar-wrap">
+          <div id="bar-academic" class="metric-bar" style="width: 0%; background: #8b5cf6;"></div>
+        </div>
+
+        <div class="metric-row" style="margin-top: 12px;">
+          <span>🗣️ 英语交流与文献能力</span>
+          <span id="score-english" style="font-weight: 600;">- 分</span>
+        </div>
+        <div class="metric-bar-wrap">
+          <div id="bar-english" class="metric-bar" style="width: 0%; background: #0284c7;"></div>
+        </div>
+
+        <div class="metric-row" style="margin-top: 12px;">
+          <span>🌟 综合素质与动机考察</span>
+          <span id="score-general" style="font-weight: 600;">- 分</span>
+        </div>
+        <div class="metric-bar-wrap">
+          <div id="bar-general" class="metric-bar" style="width: 0%; background: #10b981;"></div>
+        </div>
+      </div>
+
+      <!-- 问答复盘记录列表 -->
+      <div class="report-card">
+        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 10px; color: #1e293b;">逐题作答复盘</div>
+        <div id="review-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      </div>
+
+      <button id="btn-restart" class="btn-primary" style="margin: 12px 0 24px 0;">开启下一轮模拟面试</button>
+    </div>
+
+  </main>
+
+  <!-- 5. 逐题作答反馈 Bottom Sheet 弹窗 -->
+  <div id="modal-feedback" class="modal-overlay" style="display: none;">
+    <div class="feedback-sheet">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+        <span style="font-weight: 700; font-size: 1.1rem; color: #0f172a;">面试官即时点评</span>
+        <div class="score-badge">
+          <span id="modal-score" style="font-size: 1.8rem;">--</span>
+          <span class="score-unit">分</span>
+        </div>
+      </div>
+
+      <div id="modal-feedback-text" style="font-size: 0.9rem; line-height: 1.5; color: #334155; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px;">🎯 参考答案要点：</div>
+        <div id="modal-reference-answer" style="font-size: 0.82rem; line-height: 1.5; color: #64748b; background: #f1f5f9; padding: 10px; border-radius: 8px;">
+        </div>
+      </div>
+
+      <button id="btn-next-question" class="btn-primary">进入下一题 ➔</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

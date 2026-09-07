@@ -1,0 +1,625 @@
+/**
+ * 保研面试模拟系统前端交互与沉浸式语音控制逻辑
+ * 支持考官拟真原声自动口头提问、声波跳动、麦克风实时语音转文字、动态自适应状态机推进
+ */
+
+const state = {
+  sessionId: null,
+  questionsPerStage: 2,
+  currentStatus: null,
+  isRecording: false,
+  recognition: null,
+  activeTextarea: null,
+  activeMicBtn: null,
+  activeMicLabel: null,
+  enableVoice: true,      // 默认开启考官原声自动提问
+  currentAudio: null,     // 当前正在播放的 Audio 实例
+};
+
+// DOM 元素引用
+const views = {
+  welcome: document.getElementById("view-welcome"),
+  intro: document.getElementById("view-intro"),
+  question: document.getElementById("view-question"),
+  report: document.getElementById("view-report"),
+};
+
+const stageBadge = document.getElementById("stage-badge");
+const progressBar = document.getElementById("progress-bar");
+const modalFeedback = document.getElementById("modal-feedback");
+const btnToggleVoice = document.getElementById("btn-toggle-voice");
+
+// 初始化
+document.addEventListener("DOMContentLoaded", () => {
+  setupEventListeners();
+  setupSpeechRecognition();
+  updateProgress(0, "等待开始");
+});
+
+function switchView(viewName) {
+  Object.keys(views).forEach((k) => {
+    views[k].style.display = k === viewName ? "flex" : "none";
+  });
+}
+
+function updateProgress(percent, stageText) {
+  progressBar.style.width = `${percent}%`;
+  if (stageText) {
+    stageBadge.textContent = stageText;
+  }
+}
+
+function setupEventListeners() {
+  // 0. 全局考官原声开关
+  btnToggleVoice.addEventListener("click", () => {
+    state.enableVoice = !state.enableVoice;
+    if (state.enableVoice) {
+      btnToggleVoice.textContent = "🔊 考官原声: 开";
+      btnToggleVoice.style.background = "#eff6ff";
+      btnToggleVoice.style.borderColor = "#93c5fd";
+      btnToggleVoice.style.color = "#1e40af";
+    } else {
+      btnToggleVoice.textContent = "🔇 考官原声: 关";
+      btnToggleVoice.style.background = "#f1f5f9";
+      btnToggleVoice.style.borderColor = "#cbd5e1";
+      btnToggleVoice.style.color = "#64748b";
+      stopVoice();
+    }
+  });
+
+  // 1. 题量选择
+  document.querySelectorAll(".q-count-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".q-count-btn").forEach((b) => {
+        b.classList.remove("active");
+        b.style.borderColor = "#cbd5e1";
+        b.style.background = "#ffffff";
+        b.style.color = "#0f172a";
+        b.style.fontWeight = "normal";
+      });
+      btn.classList.add("active");
+      btn.style.borderColor = "#3b82f6";
+      btn.style.background = "#eff6ff";
+      btn.style.color = "#1d4ed8";
+      btn.style.fontWeight = "600";
+      state.questionsPerStage = parseInt(btn.getAttribute("data-count"), 10);
+    });
+  });
+
+  // 2. 开始面试
+  document.getElementById("btn-start-interview").addEventListener("click", startInterview);
+
+  // 3. 预设自我介绍文案
+  const introTextarea = document.getElementById("intro-textarea");
+  document.getElementById("btn-preset-zh").addEventListener("click", () => {
+    introTextarea.value =
+      "各位老师好，我叫李华，来自软件工程专业。在本科期间我专业成绩排名前5%，主持过一项深度学习模型优化国家级大创项目，并发表过一篇CCF推荐会议论文。非常荣幸能参加贵校的保研面试！";
+    updateCharCount(introTextarea, "intro-char-count");
+  });
+
+  document.getElementById("btn-preset-en").addEventListener("click", () => {
+    introTextarea.value =
+      "Good morning, distinguished professors. My name is Li Hua, majoring in Software Engineering. Throughout my undergraduate study, I maintained top academic standing and developed a strong passion for artificial intelligence. I am eager to pursue my master's degree in your prestigious laboratory.";
+    updateCharCount(introTextarea, "intro-char-count");
+  });
+
+  introTextarea.addEventListener("input", () => {
+    updateCharCount(introTextarea, "intro-char-count");
+  });
+
+  const answerTextarea = document.getElementById("answer-textarea");
+  answerTextarea.addEventListener("input", () => {
+    updateCharCount(answerTextarea, "answer-char-count");
+  });
+
+  // 4. 提交自我介绍
+  document.getElementById("btn-submit-intro").addEventListener("click", submitIntro);
+
+  // 5. 提示展开收起
+  const tipsToggle = document.getElementById("tips-toggle");
+  const tipsBody = document.getElementById("tips-body");
+  const tipsArrow = document.getElementById("tips-arrow");
+  tipsToggle.addEventListener("click", () => {
+    const isHidden = tipsBody.style.display === "none";
+    tipsBody.style.display = isHidden ? "block" : "none";
+    tipsArrow.textContent = isHidden ? "▲" : "▼";
+  });
+
+  // 6. 重播自我介绍考官引导原声
+  document.getElementById("btn-replay-intro-audio").addEventListener("click", () => {
+    playInterviewerVoice(
+      "同学你好，欢迎参加本次保研面试！请先向在座各位老师进行自我介绍。",
+      document.getElementById("intro-avatar"),
+      document.getElementById("intro-speaking-status")
+    );
+  });
+
+  // 7. 重播题目原声
+  document.getElementById("btn-replay-audio").addEventListener("click", () => {
+    const curQ = state.currentStatus?.current_question;
+    if (curQ) {
+      playInterviewerVoice(
+        curQ.question,
+        document.getElementById("question-avatar"),
+        document.getElementById("question-speaking-status")
+      );
+    }
+  });
+
+  // 8. 麦克风语音录入
+  document.getElementById("btn-intro-mic").addEventListener("click", () => {
+    toggleRecording(
+      document.getElementById("intro-textarea"),
+      document.getElementById("btn-intro-mic"),
+      document.getElementById("intro-mic-label"),
+      "intro-char-count"
+    );
+  });
+
+  document.getElementById("btn-answer-mic").addEventListener("click", () => {
+    toggleRecording(
+      document.getElementById("answer-textarea"),
+      document.getElementById("btn-answer-mic"),
+      document.getElementById("answer-mic-label"),
+      "answer-char-count"
+    );
+  });
+
+  // 9. 提交回答
+  document.getElementById("btn-submit-answer").addEventListener("click", submitAnswer);
+
+  // 10. 模态框下一题
+  document.getElementById("btn-next-question").addEventListener("click", () => {
+    modalFeedback.style.display = "none";
+    renderCurrentState();
+  });
+
+  // 11. 重新开始
+  document.getElementById("btn-restart").addEventListener("click", () => {
+    stopRecording();
+    stopVoice();
+    state.sessionId = null;
+    state.currentStatus = null;
+    introTextarea.value = "";
+    answerTextarea.value = "";
+    switchView("welcome");
+    updateProgress(0, "准备中");
+  });
+}
+
+function updateCharCount(textarea, countElId) {
+  const countEl = document.getElementById(countElId);
+  if (countEl) {
+    countEl.textContent = `${textarea.value.length} 字`;
+  }
+}
+
+// ---------------- 沉浸式考官人声发音播放器 ----------------
+function stopVoice() {
+  if (state.currentAudio) {
+    state.currentAudio.pause();
+    state.currentAudio = null;
+  }
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  // 清理动效
+  document.querySelectorAll(".avatar").forEach((a) => a.classList.remove("speaking"));
+}
+
+function playInterviewerVoice(text, avatarEl, statusEl) {
+  stopVoice();
+  if (!state.enableVoice || !text) return;
+
+  // 开启说话动画
+  if (avatarEl) avatarEl.classList.add("speaking");
+  if (statusEl) {
+    statusEl.innerHTML = `
+      <span>考官口头提问中...</span>
+      <span class="voice-wave-container">
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+      </span>
+    `;
+    statusEl.style.color = "#2563eb";
+  }
+
+  // 优先通过后端高质量神经网络人声接口播放
+  const audioUrl = `/api/audio/tts?text=${encodeURIComponent(text)}`;
+  const audio = new Audio(audioUrl);
+  state.currentAudio = audio;
+
+  const onPlaybackDone = () => {
+    if (avatarEl) avatarEl.classList.remove("speaking");
+    if (statusEl) {
+      statusEl.innerHTML = `<span>提问完毕，请作答 ✍️</span>`;
+      statusEl.style.color = "#059669";
+    }
+    state.currentAudio = null;
+  };
+
+  audio.onended = onPlaybackDone;
+
+  audio.onerror = () => {
+    console.warn("服务端音频加载遇到问题，降级为浏览器本地 SpeechSynthesis 引擎");
+    // 降级使用浏览器的 SpeechSynthesis
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      const isEn = /[a-zA-Z]{5,}/.test(text);
+      utterance.lang = isEn ? "en-US" : "zh-CN";
+      utterance.rate = 1.0;
+      utterance.onend = onPlaybackDone;
+      utterance.onerror = onPlaybackDone;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      onPlaybackDone();
+    }
+  };
+
+  // 触发播放（手机端在首次点击开始面试后已具备自动播放上下文）
+  const playPromise = audio.play();
+  if (playPromise !== undefined) {
+    playPromise.catch((err) => {
+      console.log("浏览器自动播放限制，等待用户手势点击:", err);
+      if (avatarEl) avatarEl.classList.remove("speaking");
+      if (statusEl) {
+        statusEl.innerHTML = `<span>点击重新听题播放</span>`;
+        statusEl.style.color = "#64748b";
+      }
+    });
+  }
+}
+
+// ---------------- 语音识别录入 (Web Speech API) ----------------
+function setupSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.warn("当前浏览器不支持 Web Speech API 实时语音转文字");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "zh-CN";
+
+  recognition.onresult = (event) => {
+    let finalTranscript = "";
+
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      }
+    }
+
+    if (state.activeTextarea && finalTranscript) {
+      state.activeTextarea.value += finalTranscript;
+      updateCharCount(
+        state.activeTextarea,
+        state.activeTextarea.id === "intro-textarea" ? "intro-char-count" : "answer-char-count"
+      );
+    }
+  };
+
+  recognition.onerror = (e) => {
+    console.error("语音录入错误:", e);
+    stopRecording();
+  };
+
+  recognition.onend = () => {
+    if (state.isRecording) {
+      recognition.start();
+    }
+  };
+
+  state.recognition = recognition;
+}
+
+function toggleRecording(textarea, btn, label, countElId) {
+  if (!state.recognition) {
+    alert("您的手机浏览器暂不支持直接网页麦克风转文字，建议在手机输入法中使用自带的语音麦克风键直接说话打字！");
+    return;
+  }
+
+  if (state.isRecording) {
+    stopRecording();
+  } else {
+    // 开始说话前如果考官还在播放声音，先停止考官声音
+    stopVoice();
+    state.isRecording = true;
+    state.activeTextarea = textarea;
+    state.activeMicBtn = btn;
+    state.activeMicLabel = label;
+    btn.classList.add("recording");
+    label.textContent = "正在聆听中(点击停止)...";
+    try {
+      state.recognition.start();
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+}
+
+function stopRecording() {
+  if (state.isRecording) {
+    state.isRecording = false;
+    if (state.activeMicBtn) {
+      state.activeMicBtn.classList.remove("recording");
+    }
+    if (state.activeMicLabel) {
+      state.activeMicLabel.textContent = "语音录入";
+    }
+    if (state.recognition) {
+      try {
+        state.recognition.stop();
+      } catch (e) {}
+    }
+  }
+}
+
+// ---------------- API 调用与流程驱动 ----------------
+async function startInterview() {
+  const btn = document.getElementById("btn-start-interview");
+  btn.disabled = true;
+  btn.textContent = "正在创建考场并联络考官...";
+
+  try {
+    const res = await fetch(`/api/interview/start?questions_per_stage=${state.questionsPerStage}`, {
+      method: "POST",
+    });
+    if (!res.ok) throw new Error("启动考场失败");
+    const data = await res.json();
+    state.sessionId = data.session_id;
+    state.currentStatus = data;
+
+    switchView("intro");
+    updateProgress(10, "环节：自我介绍");
+
+    // 自动播放主考官开场问候与引导
+    playInterviewerVoice(
+      "同学你好，欢迎参加本次保研面试！请先向在座各位老师进行自我介绍。",
+      document.getElementById("intro-avatar"),
+      document.getElementById("intro-speaking-status")
+    );
+  } catch (err) {
+    alert("连接考场服务失败: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "进入考场 · 开始模拟面试";
+  }
+}
+
+async function submitIntro() {
+  stopRecording();
+  stopVoice();
+
+  const introText = document.getElementById("intro-textarea").value.trim();
+  if (introText.length < 5) {
+    alert("自我介绍过短，请多说几句再提交。");
+    return;
+  }
+
+  const btn = document.getElementById("btn-submit-intro");
+  btn.disabled = true;
+  btn.textContent = "考官正在分析开场语言并确定路线...";
+
+  try {
+    const res = await fetch(`/api/interview/${state.sessionId}/intro`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: introText }),
+    });
+
+    if (!res.ok) throw new Error("提交自我介绍失败");
+    const data = await res.json();
+    state.currentStatus = data;
+
+    renderCurrentState();
+  } catch (err) {
+    alert("提交失败: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "提交自我介绍";
+  }
+}
+
+async function submitAnswer() {
+  stopRecording();
+  stopVoice();
+
+  const answerText = document.getElementById("answer-textarea").value.trim();
+  if (answerText.length < 2) {
+    alert("作答内容不能为空，请作答后再提交。");
+    return;
+  }
+
+  const curQ = state.currentStatus.current_question;
+  if (!curQ) return;
+
+  const btn = document.getElementById("btn-submit-answer");
+  btn.disabled = true;
+  btn.textContent = "考官正在打分并生成点评...";
+
+  try {
+    const res = await fetch(`/api/interview/${state.sessionId}/answer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question_id: curQ.id,
+        answer_text: answerText,
+      }),
+    });
+
+    if (!res.ok) throw new Error("提交回答失败");
+    const result = await res.json();
+    
+    // 更新本地会话状态
+    state.currentStatus = result.status;
+
+    // 清空回答输入框
+    document.getElementById("answer-textarea").value = "";
+    updateCharCount(document.getElementById("answer-textarea"), "answer-char-count");
+
+    // 弹出即时反馈 Bottom Sheet
+    showFeedbackModal(result.evaluation, curQ);
+  } catch (err) {
+    alert("提交回答失败: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "提交本题回答";
+  }
+}
+
+function showFeedbackModal(evaluation, question) {
+  document.getElementById("modal-score").textContent = evaluation.score;
+  document.getElementById("modal-feedback-text").textContent = evaluation.feedback;
+  document.getElementById("modal-reference-answer").textContent =
+    question.reference_answer || "（本题注重个人思路表达与逻辑完整性）";
+  modalFeedback.style.display = "flex";
+}
+
+function renderCurrentState() {
+  const status = state.currentStatus;
+  if (!status) return;
+
+  if (status.is_finished) {
+    renderReportView();
+    return;
+  }
+
+  switchView("question");
+
+  const q = status.current_question;
+  if (!q) return;
+
+  // 1. 设置分类徽标与题目
+  const catBadge = document.getElementById("question-category-badge");
+  catBadge.className = "badge-tag " + getCategoryClass(q.category);
+  catBadge.textContent = getCategoryName(q.category);
+
+  document.getElementById("question-subcategory").textContent = q.subcategory;
+  document.getElementById("question-index-badge").textContent = `第 ${status.current_question_index}/${status.total_questions} 题`;
+  document.getElementById("question-text").textContent = q.question;
+
+  // 2. 根据阶段调整考官角色称呼
+  const roleNameEl = document.getElementById("interviewer-role-name");
+  if (q.category === "academic") {
+    roleNameEl.textContent = "专业课主考官";
+  } else if (q.category === "english") {
+    roleNameEl.textContent = "英语交流考官 (Professor)";
+  } else {
+    roleNameEl.textContent = "综合素质考官";
+  }
+
+  // 3. 填充思考提示
+  const tipsList = document.getElementById("tips-list");
+  tipsList.innerHTML = "";
+  if (q.tips && q.tips.length > 0) {
+    q.tips.forEach((tip) => {
+      const li = document.createElement("li");
+      li.textContent = tip;
+      tipsList.appendChild(li);
+    });
+  } else {
+    tipsList.innerHTML = "<li>无特殊限制，言之有理即可。</li>";
+  }
+
+  // 默认收起提示
+  document.getElementById("tips-body").style.display = "none";
+  document.getElementById("tips-arrow").textContent = "▼";
+
+  // 4. 更新进度条
+  const progressPercent = Math.round((status.current_question_index / (status.total_questions + 1)) * 100);
+  updateProgress(progressPercent, status.stage_name_cn);
+
+  // 5. 核心沉浸式交互：自动播放当前考官口头提问声音！
+  playInterviewerVoice(
+    q.question,
+    document.getElementById("question-avatar"),
+    document.getElementById("question-speaking-status")
+  );
+}
+
+function renderReportView() {
+  switchView("report");
+  updateProgress(100, "面试终审报告");
+  stopVoice();
+
+  const report = state.currentStatus.overall_report;
+  if (!report) return;
+
+  document.getElementById("report-avg-score").textContent = report.average_score || 0;
+  document.getElementById("report-verdict").textContent = report.verdict || "考核完成。";
+
+  // 维度拆解
+  const breakdown = report.category_breakdown || {};
+  const acadScore = breakdown.academic || 0;
+  const engScore = breakdown.english || 0;
+  const genScore = breakdown.general || 0;
+
+  document.getElementById("score-academic").textContent = `${acadScore} 分`;
+  document.getElementById("bar-academic").style.width = `${acadScore}%`;
+
+  document.getElementById("score-english").textContent = `${engScore} 分`;
+  document.getElementById("bar-english").style.width = `${engScore}%`;
+
+  document.getElementById("score-general").textContent = `${genScore} 分`;
+  document.getElementById("bar-general").style.width = `${genScore}%`;
+
+  // 渲染逐题复盘
+  const reviewList = document.getElementById("review-list");
+  reviewList.innerHTML = "";
+
+  (state.currentStatus.records || []).forEach((rec, idx) => {
+    const item = document.createElement("div");
+    item.style.border = "1px solid #e2e8f0";
+    item.style.borderRadius = "8px";
+    item.style.padding = "10px 12px";
+    item.style.background = "#f8fafc";
+
+    item.innerHTML = `
+      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+        <span style="font-weight: 600; color: #1e3a8a;">Q${idx + 1}. [${getCategoryName(rec.question.category)}] ${rec.question.subcategory}</span>
+        <span style="font-weight: 700; color: #059669;">${rec.evaluation.score} 分</span>
+      </div>
+      <div style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">${rec.question.question}</div>
+      <div style="font-size: 0.78rem; color: #64748b; margin-bottom: 4px;"><strong>你的回答：</strong>${escapeHtml(rec.user_answer)}</div>
+      <div style="font-size: 0.78rem; color: #1e40af; background: #eff6ff; padding: 6px 8px; border-radius: 6px;"><strong>考官评语：</strong>${rec.evaluation.feedback}</div>
+    `;
+    reviewList.appendChild(item);
+  });
+}
+
+function getCategoryName(cat) {
+  switch (cat) {
+    case "academic":
+      return "专业问题";
+    case "english":
+      return "英语问题";
+    case "general":
+      return "综合素质";
+    default:
+      return "面试问题";
+  }
+}
+
+function getCategoryClass(cat) {
+  switch (cat) {
+    case "academic":
+      return "badge-academic";
+    case "english":
+      return "badge-english";
+    case "general":
+      return "badge-general";
+    default:
+      return "badge-academic";
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
