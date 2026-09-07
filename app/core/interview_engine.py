@@ -52,22 +52,35 @@ class InterviewSession:
         处理自我介绍：
         1. 检测中英文开端
         2. 根据语言动态确定后续提问顺序
-        3. 组装题库队列并推出第一道题目
+        3. 组装题库队列（真实20分钟高标准面试：专业题5道、英语题3道约5分钟、一般综合题3道，共11题）
         """
         self.candidate_intro = intro_text
         lang, reason = detect_introduction_language(intro_text)
         self.detected_language = lang
         self.language_reason = reason
 
-        # 核心逻辑：中文开场优先问一般问题或专业问题；英文开场优先问英语类问题
+        # 核心逻辑：中文开场优先问一般/专业，后问英语；英文开场优先问英语，后进入专业与一般
         if lang == DetectedLanguage.ZH:
-            # 路线：一般问题 -> 专业问题 -> 英语问题
             self.planned_stages = [Stage.GENERAL, Stage.ACADEMIC, Stage.ENGLISH]
         else:
-            # 路线：英语问题 -> 专业问题 -> 一般问题
             self.planned_stages = [Stage.ENGLISH, Stage.ACADEMIC, Stage.GENERAL]
 
-        # 针对每个阶段抽取预定数量的题目
+        # 20分钟面试高标准题目配比：
+        # - 如果是速测 (questions_per_stage == 1)，按 1-2-1 配题 (共4题)
+        # - 如果是标准实战，专业题 5 道、英语题 3 道（约5分钟）、一般题 3 道，共 11 道题
+        if self.questions_per_stage == 1:
+            stage_counts = {
+                Stage.ACADEMIC: 1,
+                Stage.ENGLISH: 1,
+                Stage.GENERAL: 1,
+            }
+        else:
+            stage_counts = {
+                Stage.ACADEMIC: 5,  # 专业核心课与深度追问 5 题
+                Stage.ENGLISH: 3,   # 英语口语与学术表达 3 题 (约5分钟)
+                Stage.GENERAL: 3,   # 综合素质与心态 3 题
+            }
+
         self.question_queue = []
         stage_to_cat = {
             Stage.ACADEMIC: QuestionCategory.ACADEMIC,
@@ -77,7 +90,8 @@ class InterviewSession:
 
         for st in self.planned_stages:
             cat = stage_to_cat[st]
-            sampled = question_repo.sample_questions(cat, self.questions_per_stage)
+            count = stage_counts.get(st, 3)
+            sampled = question_repo.sample_questions(cat, count)
             self.question_queue.extend(sampled)
 
         # 题目索引归零

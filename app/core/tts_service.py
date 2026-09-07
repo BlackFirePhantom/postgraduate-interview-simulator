@@ -9,13 +9,13 @@ from app.config import BASE_DIR
 AUDIO_CACHE_DIR = BASE_DIR / "app" / "static" / "audio_cache"
 AUDIO_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-# 严肃高压考官人声配置 (具有威严感的中年教授，语速加快，直切主题)
+# 严肃高压考官人声配置 (深具威严的资深评审组长，语速超快，雷厉风行，不听废话)
 VOICE_ZH = "zh-CN-YunjianNeural"         # 沉稳、严谨、深具压迫感的资深主考官
-RATE_ZH = "+22%"                         # 语速明显加快，节奏紧凑，模拟听多套话后的雷厉风行风格
+RATE_ZH = "+40%"                         # 语速大幅加快40%，极度紧凑，模拟听烦套话后的极速发问
 PITCH_ZH = "-4Hz"                        # 语调微降，增添严肃冷峻的考场压迫感
 
 VOICE_EN = "en-US-ChristopherNeural"     # 严谨、不苟言笑的英文学术教授
-RATE_EN = "+20%"                         # 英文提问语速加快
+RATE_EN = "+28%"                         # 英文提问语速加快28%
 PITCH_EN = "-3Hz"                        # 语调深沉严肃
 
 

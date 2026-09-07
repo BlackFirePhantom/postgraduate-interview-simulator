@@ -1,11 +1,11 @@
 /**
  * 保研面试模拟系统前端交互与沉浸式语音控制逻辑
- * 支持考官拟真原声自动口头提问、声波跳动、麦克风实时语音转文字、动态自适应状态机推进
+ * 支持考官拟真原声超快语速提问、声波跳动、20分钟全场倒计时、30秒开口强制限时与自适应状态机推进
  */
 
 const state = {
   sessionId: null,
-  questionsPerStage: 2,
+  questionsPerStage: 2,   // 2 表示 20分钟高压实战(11题)，1 表示极速自测(3题)
   currentStatus: null,
   isRecording: false,
   recognition: null,
@@ -14,6 +14,11 @@ const state = {
   activeMicLabel: null,
   enableVoice: true,      // 默认开启考官原声自动提问
   currentAudio: null,     // 当前正在播放的 Audio 实例
+  examTotalSeconds: 1200, // 20分钟全场倒计时 (秒)
+  examTimerInterval: null,
+  deadlineSeconds: 30,    // 30秒开口限时
+  deadlineInterval: null,
+  hasSpokenOrTyped: false,
 };
 
 // DOM 元素引用
@@ -28,6 +33,8 @@ const stageBadge = document.getElementById("stage-badge");
 const progressBar = document.getElementById("progress-bar");
 const modalFeedback = document.getElementById("modal-feedback");
 const btnToggleVoice = document.getElementById("btn-toggle-voice");
+const examTimerBar = document.getElementById("exam-timer-bar");
+const examTimeDisplay = document.getElementById("exam-time-display");
 
 // 初始化
 document.addEventListener("DOMContentLoaded", () => {
@@ -49,6 +56,121 @@ function updateProgress(percent, stageText) {
   }
 }
 
+// ---------------- 20分钟全场考试总计时器 ----------------
+function startExamTimer() {
+  stopExamTimer();
+  state.examTotalSeconds = 1200; // 20分钟
+  examTimerBar.style.display = "flex";
+  updateExamTimeDisplay();
+
+  state.examTimerInterval = setInterval(() => {
+    state.examTotalSeconds--;
+    if (state.examTotalSeconds <= 0) {
+      clearInterval(state.examTimerInterval);
+      state.examTotalSeconds = 0;
+      updateExamTimeDisplay();
+      alert("⏰ 全场20分钟面试时间已到！请尽快完成当前题目收尾。");
+    } else {
+      updateExamTimeDisplay();
+    }
+  }, 1000);
+}
+
+function stopExamTimer() {
+  if (state.examTimerInterval) {
+    clearInterval(state.examTimerInterval);
+    state.examTimerInterval = null;
+  }
+}
+
+function updateExamTimeDisplay() {
+  const m = Math.floor(state.examTotalSeconds / 60);
+  const s = state.examTotalSeconds % 60;
+  examTimeDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+// ---------------- 30秒开口限时逻辑 ----------------
+function startResponseDeadline() {
+  stopResponseDeadline();
+  state.deadlineSeconds = 30;
+  state.hasSpokenOrTyped = false;
+
+  const card = document.getElementById("deadline-card");
+  const secEl = document.getElementById("deadline-seconds");
+  const barEl = document.getElementById("deadline-bar");
+  const badgeEl = document.getElementById("deadline-badge");
+  const tipEl = document.getElementById("deadline-tip");
+
+  if (!card || !secEl || !barEl) return;
+
+  card.classList.remove("answered");
+  barEl.classList.remove("urgent");
+  barEl.style.width = "100%";
+  secEl.textContent = "30";
+  badgeEl.textContent = "30秒内必须开口";
+  badgeEl.style.background = "#ffe4e6";
+  badgeEl.style.color = "#b91c1c";
+  tipEl.textContent = "⚠️ 考官提问后30秒内必须开口作答（打字或语音），超时视为放弃该题，直接记0分！";
+
+  state.deadlineInterval = setInterval(() => {
+    state.deadlineSeconds--;
+    
+    // 更新UI
+    secEl.textContent = Math.max(0, state.deadlineSeconds);
+    const pct = Math.max(0, (state.deadlineSeconds / 30) * 100);
+    barEl.style.width = `${pct}%`;
+
+    if (state.deadlineSeconds <= 10) {
+      barEl.classList.add("urgent");
+      badgeEl.textContent = `急！剩 ${state.deadlineSeconds} 秒`;
+    }
+
+    if (state.deadlineSeconds <= 0) {
+      clearInterval(state.deadlineInterval);
+      state.hasSpokenOrTyped = true;
+      badgeEl.textContent = "已超时未答";
+      tipEl.textContent = "❌ 30秒限时已过，考官判定未掌握该知识点，自动跳过！";
+
+      // 自动填入超时标记并自动提交
+      const textarea = document.getElementById("answer-textarea");
+      textarea.value = "（考场30秒内未开口，超时放弃作答）";
+      updateCharCount(textarea, "answer-char-count");
+      
+      setTimeout(() => {
+        submitAnswer();
+      }, 600);
+    }
+  }, 1000);
+}
+
+function markCandidateAnswered() {
+  if (state.hasSpokenOrTyped) return;
+  state.hasSpokenOrTyped = true;
+  stopResponseDeadline();
+
+  const card = document.getElementById("deadline-card");
+  const secEl = document.getElementById("deadline-seconds");
+  const barEl = document.getElementById("deadline-bar");
+  const badgeEl = document.getElementById("deadline-badge");
+  const tipEl = document.getElementById("deadline-tip");
+
+  if (!card) return;
+  card.classList.add("answered");
+  if (barEl) barEl.classList.remove("urgent");
+  secEl.textContent = "已开口作答 ✅";
+  badgeEl.textContent = "作答进行中";
+  badgeEl.style.background = "#dcfce7";
+  badgeEl.style.color = "#15803d";
+  tipEl.textContent = "已成功开口，限时暂停。请沉着完整阐述，完成后点击下方提交本题回答。";
+}
+
+function stopResponseDeadline() {
+  if (state.deadlineInterval) {
+    clearInterval(state.deadlineInterval);
+    state.deadlineInterval = null;
+  }
+}
+
 function setupEventListeners() {
   // 0. 全局考官原声开关
   btnToggleVoice.addEventListener("click", () => {
@@ -67,21 +189,21 @@ function setupEventListeners() {
     }
   });
 
-  // 1. 题量选择
+  // 1. 题量/模式选择
   document.querySelectorAll(".q-count-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".q-count-btn").forEach((b) => {
         b.classList.remove("active");
         b.style.borderColor = "#cbd5e1";
         b.style.background = "#ffffff";
-        b.style.color = "#0f172a";
+        b.style.color = "#475569";
         b.style.fontWeight = "normal";
       });
       btn.classList.add("active");
-      btn.style.borderColor = "#3b82f6";
-      btn.style.background = "#eff6ff";
-      btn.style.color = "#1d4ed8";
-      btn.style.fontWeight = "600";
+      btn.style.borderColor = "#dc2626";
+      btn.style.background = "#fef2f2";
+      btn.style.color = "#991b1b";
+      btn.style.fontWeight = "700";
       state.questionsPerStage = parseInt(btn.getAttribute("data-count"), 10);
     });
   });
@@ -89,7 +211,7 @@ function setupEventListeners() {
   // 2. 开始面试
   document.getElementById("btn-start-interview").addEventListener("click", startInterview);
 
-  // 3. 预设自我介绍文案
+  // 3. 预设自我介绍文案 (刘子俊背景定制)
   const introTextarea = document.getElementById("intro-textarea");
   document.getElementById("btn-preset-zh").addEventListener("click", () => {
     introTextarea.value =
@@ -110,6 +232,7 @@ function setupEventListeners() {
   const answerTextarea = document.getElementById("answer-textarea");
   answerTextarea.addEventListener("input", () => {
     updateCharCount(answerTextarea, "answer-char-count");
+    markCandidateAnswered(); // 只要键盘输入，即视为已开口，停止30秒倒计时
   });
 
   // 4. 提交自我介绍
@@ -157,6 +280,7 @@ function setupEventListeners() {
   });
 
   document.getElementById("btn-answer-mic").addEventListener("click", () => {
+    markCandidateAnswered(); // 点击麦克风开始录入，视为已开口，停止30秒倒计时
     toggleRecording(
       document.getElementById("answer-textarea"),
       document.getElementById("btn-answer-mic"),
@@ -178,10 +302,13 @@ function setupEventListeners() {
   document.getElementById("btn-restart").addEventListener("click", () => {
     stopRecording();
     stopVoice();
+    stopExamTimer();
+    stopResponseDeadline();
     state.sessionId = null;
     state.currentStatus = null;
     introTextarea.value = "";
     answerTextarea.value = "";
+    examTimerBar.style.display = "none";
     switchView("welcome");
     updateProgress(0, "准备中");
   });
@@ -203,7 +330,6 @@ function stopVoice() {
   if (window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }
-  // 清理动效
   document.querySelectorAll(".avatar").forEach((a) => a.classList.remove("speaking"));
 }
 
@@ -211,7 +337,6 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
   stopVoice();
   if (!state.enableVoice || !text) return;
 
-  // 开启说话动画
   if (avatarEl) avatarEl.classList.add("speaking");
   if (statusEl) {
     statusEl.innerHTML = `
@@ -226,7 +351,6 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
     statusEl.style.color = "#dc2626";
   }
 
-  // 优先通过后端高质量神经网络人声接口播放
   const audioUrl = `/api/audio/tts?text=${encodeURIComponent(text)}`;
   const audio = new Audio(audioUrl);
   state.currentAudio = audio;
@@ -234,7 +358,7 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
   const onPlaybackDone = () => {
     if (avatarEl) avatarEl.classList.remove("speaking");
     if (statusEl) {
-      statusEl.innerHTML = `<span>⏱️ 提问完毕，请直接作答核心要点（切勿绕弯子）</span>`;
+      statusEl.innerHTML = `<span>⏱️ 提问完毕，30秒内请迅速开口作答</span>`;
       statusEl.style.color = "#047857";
     }
     state.currentAudio = null;
@@ -244,12 +368,11 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
 
   audio.onerror = () => {
     console.warn("服务端音频加载遇到问题，降级为浏览器本地 SpeechSynthesis 引擎");
-    // 降级使用浏览器的 SpeechSynthesis (语速同样加快 1.25)
     if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       const isEn = /[a-zA-Z]{5,}/.test(text);
       utterance.lang = isEn ? "en-US" : "zh-CN";
-      utterance.rate = 1.25;
+      utterance.rate = 1.35; // 浏览器本地引擎同样极大加快语速
       utterance.onend = onPlaybackDone;
       utterance.onerror = onPlaybackDone;
       window.speechSynthesis.speak(utterance);
@@ -258,7 +381,6 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
     }
   };
 
-  // 触发播放（手机端在首次点击开始面试后已具备自动播放上下文）
   const playPromise = audio.play();
   if (playPromise !== undefined) {
     playPromise.catch((err) => {
@@ -275,10 +397,7 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
 // ---------------- 语音识别录入 (Web Speech API) ----------------
 function setupSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    console.warn("当前浏览器不支持 Web Speech API 实时语音转文字");
-    return;
-  }
+  if (!SpeechRecognition) return;
 
   const recognition = new SpeechRecognition();
   recognition.continuous = true;
@@ -287,7 +406,6 @@ function setupSpeechRecognition() {
 
   recognition.onresult = (event) => {
     let finalTranscript = "";
-
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
         finalTranscript += event.results[i][0].transcript;
@@ -300,6 +418,7 @@ function setupSpeechRecognition() {
         state.activeTextarea,
         state.activeTextarea.id === "intro-textarea" ? "intro-char-count" : "answer-char-count"
       );
+      markCandidateAnswered(); // 语音识别命中也标记为已开口
     }
   };
 
@@ -326,7 +445,6 @@ function toggleRecording(textarea, btn, label, countElId) {
   if (state.isRecording) {
     stopRecording();
   } else {
-    // 开始说话前如果考官还在播放声音，先停止考官声音
     stopVoice();
     state.isRecording = true;
     state.activeTextarea = textarea;
@@ -377,6 +495,9 @@ async function startInterview() {
     switchView("intro");
     updateProgress(10, "环节：自我介绍");
 
+    // 开启 20 分钟全真考试总计时器！
+    startExamTimer();
+
     // 自动播放主考官开场问候与引导
     playInterviewerVoice(
       "同学注意把控时间！今天我们已经面试了几十名考生，不要讲空话套话。请直接用最精炼的语言，汇报你的核心硬核竞争力与科研实践成果！",
@@ -387,7 +508,7 @@ async function startInterview() {
     alert("连接考场服务失败: " + err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = "进入考场 · 开始模拟面试";
+    btn.textContent = "进入考场 · 开启20分钟高压实战";
   }
 }
 
@@ -428,6 +549,7 @@ async function submitIntro() {
 async function submitAnswer() {
   stopRecording();
   stopVoice();
+  stopResponseDeadline(); // 提交后关闭当前题目的30秒倒计时
 
   const answerText = document.getElementById("answer-textarea").value.trim();
   if (answerText.length < 2) {
@@ -506,11 +628,11 @@ function renderCurrentState() {
   // 2. 根据阶段调整考官角色称呼
   const roleNameEl = document.getElementById("interviewer-role-name");
   if (q.category === "academic") {
-    roleNameEl.textContent = "专业课主考官";
+    roleNameEl.textContent = "核心专业课考官";
   } else if (q.category === "english") {
-    roleNameEl.textContent = "英语交流考官 (Professor)";
+    roleNameEl.textContent = "英语口语考官 (5分钟)";
   } else {
-    roleNameEl.textContent = "综合素质考官";
+    roleNameEl.textContent = "综合素质评审考官";
   }
 
   // 3. 填充思考提示
@@ -523,10 +645,9 @@ function renderCurrentState() {
       tipsList.appendChild(li);
     });
   } else {
-    tipsList.innerHTML = "<li>无特殊限制，言之有理即可。</li>";
+    tipsList.innerHTML = "<li>无特殊限制，直击核心物理/工程本质。</li>";
   }
 
-  // 默认收起提示
   document.getElementById("tips-body").style.display = "none";
   document.getElementById("tips-arrow").textContent = "▼";
 
@@ -534,7 +655,10 @@ function renderCurrentState() {
   const progressPercent = Math.round((status.current_question_index / (status.total_questions + 1)) * 100);
   updateProgress(progressPercent, status.stage_name_cn);
 
-  // 5. 核心沉浸式交互：自动播放当前考官口头提问声音！
+  // 5. 启动 30 秒限时作答开口计时器！
+  startResponseDeadline();
+
+  // 6. 核心交互：极速播放考官严肃发问语音
   playInterviewerVoice(
     q.question,
     document.getElementById("question-avatar"),
@@ -546,6 +670,8 @@ function renderReportView() {
   switchView("report");
   updateProgress(100, "面试终审报告");
   stopVoice();
+  stopExamTimer();
+  stopResponseDeadline();
 
   const report = state.currentStatus.overall_report;
   if (!report) return;
@@ -582,7 +708,7 @@ function renderReportView() {
     item.innerHTML = `
       <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
         <span style="font-weight: 600; color: #1e3a8a;">Q${idx + 1}. [${getCategoryName(rec.question.category)}] ${rec.question.subcategory}</span>
-        <span style="font-weight: 700; color: #059669;">${rec.evaluation.score} 分</span>
+        <span style="font-weight: 700; color: ${rec.evaluation.score >= 60 ? '#059669' : '#dc2626'};">${rec.evaluation.score} 分</span>
       </div>
       <div style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">${rec.question.question}</div>
       <div style="font-size: 0.78rem; color: #64748b; margin-bottom: 4px;"><strong>你的回答：</strong>${escapeHtml(rec.user_answer)}</div>

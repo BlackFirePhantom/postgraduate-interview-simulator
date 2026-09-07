@@ -57,3 +57,31 @@ def test_full_interview_answering_lifecycle():
     assert status.overall_report is not None
     assert "average_score" in status.overall_report
     assert status.overall_report["total_questions_answered"] == 3
+
+
+def test_20min_full_exam_structure():
+    """验证20分钟全真考场模式（共11题：5道专业题、3道英语题约5分钟、3道综合题）"""
+    manager = SessionManager()
+    session = manager.create_session(questions_per_stage=2)
+    status = session.start_with_intro("各位评委老师好，我是刘子俊，主要研究微电子与硬件加速。")
+
+    assert status.total_questions == 11
+    # 验证各类型题目分布
+    categories = [q.category for q in session.question_queue]
+    assert categories.count(QuestionCategory.ACADEMIC) == 5
+    assert categories.count(QuestionCategory.ENGLISH) == 3
+    assert categories.count(QuestionCategory.GENERAL) == 3
+
+
+def test_timeout_zero_score():
+    """验证30秒未开口作答/超时放弃直接判0分"""
+    manager = SessionManager()
+    session = manager.create_session(questions_per_stage=1)
+    session.start_with_intro("老师好，我参加面试。")
+
+    cur_q = session.get_current_question()
+    assert cur_q is not None
+    eval_res = session.submit_answer(cur_q.id, "（考场30秒内未开口，超时放弃作答）")
+    assert eval_res.score == 0
+    assert "0分" in eval_res.feedback or "未开口" in eval_res.feedback or "超时" in eval_res.feedback
+

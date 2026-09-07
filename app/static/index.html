@@ -23,6 +23,12 @@
     </div>
   </header>
 
+  <!-- 20分钟高压全场倒计时栏 -->
+  <div id="exam-timer-bar" class="exam-timer-banner" style="display: none;">
+    <span>⏳ 考场总时间：<strong id="exam-time-display" style="font-size: 0.95rem;">20:00</strong></span>
+    <span style="font-size: 0.72rem; color: #dc2626;">英语环节约占5分钟</span>
+  </div>
+
   <!-- 阶段进度条 -->
   <div class="progress-container">
     <div class="progress-track">
@@ -42,33 +48,39 @@
 
     <!-- 1. 欢迎开屏界面 -->
     <div id="view-welcome" style="display: flex; flex-direction: column; height: 100%;">
-      <div style="text-align: center; margin: 24px 0 16px 0;">
-        <div style="font-size: 3.2rem; margin-bottom: 8px;">🧑‍🏫</div>
-        <h2 style="font-size: 1.35rem; margin: 0 0 6px 0; color: #1e3a8a;">保研模拟面试系统</h2>
-        <p style="font-size: 0.85rem; color: #64748b; margin: 0;">专业问题 · 英语表达 · 综合素质</p>
+      <div style="text-align: center; margin: 18px 0 14px 0;">
+        <div style="font-size: 3rem; margin-bottom: 6px;">🧑‍🏫</div>
+        <h2 style="font-size: 1.35rem; margin: 0 0 6px 0; color: #1e3a8a;">保研全真模拟面试</h2>
+        <p style="font-size: 0.85rem; color: #dc2626; font-weight: 600; margin: 0;">20分钟全真实战 · 30秒开口硬性限时 · 英语5分钟</p>
       </div>
 
-      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px; margin-bottom: 18px; font-size: 0.85rem; line-height: 1.5; color: #1e40af;">
-        <strong>💡 智能自适应机制：</strong><br>
-        系统将根据你的<strong>自我介绍是以中文还是英文开始</strong>自动动态规划提问路线：
-        <ul style="margin: 6px 0 0 16px; padding: 0;">
-          <li><strong>中文开场：</strong>优先切入一般综合问题或专业技术题，最后考察英语。</li>
-          <li><strong>英文开场：</strong>优先切入英语交流与学术英语题，随后考察专业与综合。</li>
-        </ul>
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.83rem; line-height: 1.5; color: #1e40af;">
+        <strong>💡 考场自适应规则：</strong><br>
+        • <strong>中文开场：</strong>综合素质(3题) ➔ 核心专业课(5题) ➔ 英语口语(3题，约5分钟)<br>
+        • <strong>英文开场：</strong>英语口语(3题，约5分钟) ➔ 核心专业课(5题) ➔ 综合素质(3题)<br>
+        • <strong>⚡ 考官高压规则：</strong>每道题提问后<strong>限时 30 秒内开口</strong>，超时未答直接 0 分跳过！
       </div>
 
-      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 24px;">
-        <label style="font-size: 0.88rem; font-weight: 600; color: #334155; display: block; margin-bottom: 8px;">
-          每个阶段抽取题数：
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 20px;">
+        <label style="font-size: 0.88rem; font-weight: 700; color: #334155; display: block; margin-bottom: 8px;">
+          选择实战演练模式：
         </label>
-        <div style="display: flex; gap: 10px;">
-          <button type="button" class="action-btn q-count-btn" data-count="1" style="flex: 1;">每阶段 1 题 (速测)</button>
-          <button type="button" class="action-btn q-count-btn active" data-count="2" style="flex: 1; border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; font-weight: 600;">每阶段 2 题 (标准)</button>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button type="button" class="action-btn q-count-btn active" data-count="2" style="width: 100%; border-color: #dc2626; background: #fef2f2; color: #991b1b; font-weight: 700; padding: 10px 12px; text-align: left;">
+            🔥 20分钟全真保研高压考场 (强烈推荐)<br>
+            <span style="font-size: 0.74rem; font-weight: normal; color: #b91c1c;">11 道高压真题 (5道专业 + 3道英语占5分钟 + 3道综合) · 严格 30s 开口限时</span>
+          </button>
+          <button type="button" class="action-btn q-count-btn" data-count="1" style="width: 100%; border-color: #cbd5e1; background: #ffffff; color: #475569; padding: 8px 12px; text-align: left;">
+            ⚡ 碎片时间极速自测版 (3题)<br>
+            <span style="font-size: 0.72rem; color: #94a3b8;">共 3 题（1道专业 + 1道英语 + 1道综合）· 适合碎片时间快速演练</span>
+          </button>
         </div>
       </div>
 
       <div style="margin-top: auto; padding-bottom: 16px;">
-        <button id="btn-start-interview" class="btn-primary">进入考场 · 开始模拟面试</button>
+        <button id="btn-start-interview" class="btn-primary" style="background: linear-gradient(135deg, #991b1b, #dc2626);">
+          进入考场 · 开启20分钟高压实战
+        </button>
       </div>
     </div>
 
@@ -170,6 +182,25 @@
         </div>
         <div id="tips-body" class="tips-content" style="display: none;">
           <ul id="tips-list" style="margin: 0; padding-left: 18px;"></ul>
+        </div>
+      </div>
+
+      <!-- 30秒开口强制限时警示卡片 -->
+      <div id="deadline-card" class="deadline-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span id="deadline-title" style="font-size: 0.82rem; font-weight: 700; color: #dc2626; display: flex; align-items: center; gap: 4px;">
+            <span>⏱️ 思考开口限时：</span>
+            <span id="deadline-seconds" style="font-size: 1.25rem; font-weight: 800;">30</span> 秒
+          </span>
+          <span id="deadline-badge" style="font-size: 0.72rem; color: #b91c1c; background: #ffe4e6; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+            30秒内必须开口
+          </span>
+        </div>
+        <div class="deadline-track">
+          <div id="deadline-bar" class="deadline-bar"></div>
+        </div>
+        <div id="deadline-tip" style="font-size: 0.72rem; color: #64748b; margin-top: 5px;">
+          ⚠️ 考官发问完毕后 30 秒内必须开口作答（打字或语音），超时直接记 0 分跳过！
         </div>
       </div>
 

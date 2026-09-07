@@ -15,11 +15,20 @@ class AnswerEvaluator:
         """评估候选人对某道题目的回答"""
         cleaned = answer.strip()
         
-        # 1. 极短回答处理
-        if len(cleaned) < 5:
+        # 0. 30秒未开口/超时处理
+        if "超时" in cleaned or "未开口" in cleaned or len(cleaned) < 3:
             return EvaluationResult(
-                score=20,
-                feedback="回答过于简短，未能展现出对该问题的深入理解和专业素养，建议详细展开核心论点与背景。",
+                score=0,
+                feedback="【严重超时未开口 · 0分】考官发问后30秒内未能及时开口作答，表现出严重的迟疑与临场反应迟钝。在真实20分钟高压保研复试中，考官直接视为该题不会，不予给分！",
+                key_points_covered=[],
+                missing_points=question.tips
+            )
+
+        # 1. 极短回答处理
+        if len(cleaned) < 8:
+            return EvaluationResult(
+                score=15,
+                feedback="【作答过短】回答寥寥数语，未能展现对该问题的学科素养，建议至少展开阐述核心原理与实现方案。",
                 key_points_covered=[],
                 missing_points=question.tips
             )
