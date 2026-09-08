@@ -119,3 +119,38 @@ def test_api_specialized_mode_flow():
     assert "核心专业课专项" in report["verdict"]
 
 
+def test_api_give_up_and_reference_answer_flow():
+    """验证通过 API 提交'我不会'能获得0分并返回完整的标答供AI朗读"""
+    res = client.post("/api/interview/start?mode=quick&questions_per_stage=1")
+    assert res.status_code == 200
+    session_id = res.json()["session_id"]
+
+    res_intro = client.post(
+        f"/api/interview/{session_id}/intro",
+        json={"text": "各位老师好，我参加保研复试。"}
+    )
+    assert res_intro.status_code == 200
+    cur_q = res_intro.json()["current_question"]
+    assert cur_q is not None
+
+    # 提交“我不会”
+    res_ans = client.post(
+        f"/api/interview/{session_id}/answer",
+        json={"question_id": cur_q["id"], "answer_text": "我不会，请教老师指点。"}
+    )
+    assert res_ans.status_code == 200
+    ans_data = res_ans.json()
+    assert ans_data["evaluation"]["score"] == 0
+    assert "0分" in ans_data["evaluation"]["feedback"]
+    assert "主动放弃" in ans_data["evaluation"]["feedback"]
+    assert len(cur_q["reference_answer"]) > 0
+
+
+def test_api_tts_with_custom_rate():
+    """验证 TTS 接口支持 rate 参数（标答以正常原速 +0% 朗读，清晰纠音）"""
+    res = client.get("/api/audio/tts?text=Could+you+share+your+hometown&rate=%2B0%25")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "audio/mpeg"
+    assert len(res.content) > 100
+
+

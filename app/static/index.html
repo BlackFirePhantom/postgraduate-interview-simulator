@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>保研面试模拟系统</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=2.2">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.3">
 </head>
 <body>
 
@@ -186,7 +186,12 @@
         <div id="question-avatar" class="avatar speaking" style="background: linear-gradient(135deg, #1e293b, #334155);">考</div>
         <div class="speech-bubble" style="border-left: 3px solid #1e3a8a;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <strong id="interviewer-role-name" style="font-size: 0.85rem; color: #1e3a8a;">专家主考官</strong>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <strong id="interviewer-role-name" style="font-size: 0.85rem; color: #1e3a8a;">专家主考官</strong>
+              <button type="button" id="btn-toggle-blur" class="action-btn" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; background: #f1f5f9; color: #475569; border-color: #cbd5e1; cursor: pointer;">
+                👁️ 取消隐藏 (听力盲测)
+              </button>
+            </div>
             <span id="question-speaking-status" style="font-size: 0.72rem; color: #2563eb; display: flex; align-items: center;">
               <span id="speaking-text">⚡ 考官严肃提问中...</span>
               <span class="voice-wave-container">
@@ -198,8 +203,13 @@
             </span>
           </div>
 
-          <div id="question-text" class="question-text">
-            加载题目中...
+          <div id="question-text-wrap" style="position: relative; min-height: 48px;">
+            <div id="question-text" class="question-text blurred">
+              加载题目中...
+            </div>
+            <div id="question-blur-hint" class="blur-overlay-hint">
+              <span>🎧 听力盲测模式：先专注听考官发问<br><strong style="color: #2563eb; text-decoration: underline;">点击此处或上方按钮显示题目文本</strong></span>
+            </div>
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
@@ -263,7 +273,12 @@
           <span style="font-size: 0.75rem; color: #94a3b8;" id="answer-char-count">0 字</span>
         </div>
 
-        <button id="btn-submit-answer" class="btn-primary" style="margin-top: 8px;">提交本题回答</button>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button type="button" id="btn-give-up" class="action-btn" style="background: #fef2f2; border-color: #fca5a5; color: #b91c1c; font-weight: 600; font-size: 0.82rem; padding: 8px 12px; border-radius: 8px; white-space: nowrap; cursor: pointer;">
+            🤷 我不会 · 查看标答
+          </button>
+          <button id="btn-submit-answer" class="btn-primary" style="flex: 1; margin-top: 0;">提交本题回答</button>
+        </div>
       </div>
     </div>
 
@@ -342,8 +357,22 @@
       </div>
 
       <div style="margin-bottom: 14px;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px;">🎯 参考答案要点：</div>
-        <div id="modal-reference-answer" style="font-size: 0.82rem; line-height: 1.5; color: #64748b; background: #f1f5f9; padding: 10px; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">🎯 标准参考回答 (权威标答)：</span>
+          <button type="button" id="btn-tts-modal-ref" class="action-btn" style="font-size: 0.74rem; padding: 3px 8px; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+            <span id="tts-modal-ref-icon">🔊</span>
+            <span id="tts-modal-ref-label">AI 朗读标答 · 纠音跟读</span>
+          </button>
+        </div>
+        <div id="modal-reference-answer" style="font-size: 0.85rem; line-height: 1.6; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 8px; max-height: 220px; overflow-y: auto; white-space: pre-wrap;">
+        </div>
+        <div id="modal-tts-ref-status" style="display: none; font-size: 0.72rem; color: #2563eb; margin-top: 5px; align-items: center; gap: 4px;">
+          <span>正在朗读标准回答 (正常自然语速，适合跟读纠音)...</span>
+          <span class="voice-wave-container">
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+          </span>
         </div>
       </div>
 
@@ -353,6 +382,6 @@
 
 </div>
 
-<script src="/static/js/app.js?v=2.2"></script>
+<script src="/static/js/app.js?v=2.3"></script>
 </body>
 </html>

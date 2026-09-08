@@ -16,10 +16,19 @@ class AnswerEvaluator:
         cleaned = answer.strip()
         
         # 0. 30秒未开口/超时处理
-        if "超时" in cleaned or "未开口" in cleaned or len(cleaned) < 3:
+        if "超时" in cleaned or "未开口" in cleaned:
             return EvaluationResult(
                 score=0,
                 feedback="【严重超时未开口 · 0分】考官发问后30秒内未能及时开口作答，表现出严重的迟疑与临场反应迟钝。在真实20分钟高压保研复试中，考官直接视为该题不会，不予给分！",
+                key_points_covered=[],
+                missing_points=question.tips
+            )
+
+        # 0.1 我不会 / 主动放弃 / 查看标答
+        if any(k in cleaned for k in ["我不会", "不会", "放弃", "跳过", "标答", "不知道", "pass", "give up", "i don't know", "i do not know"]) or len(cleaned) < 3:
+            return EvaluationResult(
+                score=0,
+                feedback="【主动放弃 · 0分】考生坦诚表示本题暂未掌握。坦诚面对知识盲区是严谨的科研态度。已为你呈现权威标准参考解答，可点击【🔊 AI 朗读标答】认真研读与跟读纠音，抓紧攻克薄弱环节！",
                 key_points_covered=[],
                 missing_points=question.tips
             )

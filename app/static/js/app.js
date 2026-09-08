@@ -22,6 +22,9 @@ const state = {
   deadlineSeconds: 30,    // 30秒开口限时
   deadlineInterval: null,
   hasSpokenOrTyped: false,
+  isQuestionBlurred: true, // 听力盲测：题目默认虚化
+  refAudio: null,          // 标答语音播放器 Audio 实例
+  isPlayingRefAudio: false,
 };
 
 // DOM 元素引用
@@ -395,11 +398,38 @@ function setupEventListeners() {
     );
   });
 
+  // 8.1 题目虚化隐藏与听力盲测切换
+  const btnToggleBlur = document.getElementById("btn-toggle-blur");
+  const blurHint = document.getElementById("question-blur-hint");
+  if (btnToggleBlur) {
+    btnToggleBlur.addEventListener("click", () => {
+      setQuestionBlur(!state.isQuestionBlurred);
+    });
+  }
+  if (blurHint) {
+    blurHint.addEventListener("click", () => {
+      setQuestionBlur(false);
+    });
+  }
+
+  // 8.2 “我不会 · 查看标答”
+  const btnGiveUp = document.getElementById("btn-give-up");
+  if (btnGiveUp) {
+    btnGiveUp.addEventListener("click", giveUpAndShowAnswer);
+  }
+
+  // 8.3 弹窗标准回答 AI 朗读 / 跟读纠音
+  const btnTtsModalRef = document.getElementById("btn-tts-modal-ref");
+  if (btnTtsModalRef) {
+    btnTtsModalRef.addEventListener("click", toggleModalRefAudio);
+  }
+
   // 9. 提交回答
   document.getElementById("btn-submit-answer").addEventListener("click", submitAnswer);
 
   // 10. 模态框下一题
   document.getElementById("btn-next-question").addEventListener("click", () => {
+    stopRefAudio();
     modalFeedback.style.display = "none";
     renderCurrentState();
   });
@@ -408,6 +438,7 @@ function setupEventListeners() {
   document.getElementById("btn-restart").addEventListener("click", () => {
     stopRecording();
     stopVoice();
+    stopRefAudio();
     stopExamTimer();
     stopResponseDeadline();
     state.sessionId = null;
@@ -716,7 +747,168 @@ async function submitAnswer() {
   }
 }
 
+function setQuestionBlur(isBlurred) {
+  state.isQuestionBlurred = isBlurred;
+  const qText = document.getElementById("question-text");
+  const hint = document.getElementById("question-blur-hint");
+  const btn = document.getElementById("btn-toggle-blur");
+  if (!qText || !hint || !btn) return;
+
+  if (isBlurred) {
+    qText.classList.add("blurred");
+    hint.style.display = "flex";
+    btn.textContent = "👁️ 取消隐藏 (听力盲测)";
+    btn.style.background = "#f1f5f9";
+    btn.style.borderColor = "#cbd5e1";
+    btn.style.color = "#475569";
+  } else {
+    qText.classList.remove("blurred");
+    hint.style.display = "none";
+    btn.textContent = "🙈 隐藏题目 (恢复盲听)";
+    btn.style.background = "#eff6ff";
+    btn.style.borderColor = "#93c5fd";
+    btn.style.color = "#1d4ed8";
+  }
+}
+
+async function giveUpAndShowAnswer() {
+  stopRecording();
+  stopVoice();
+  stopRefAudio();
+  stopResponseDeadline();
+
+  const curQ = state.currentStatus?.current_question;
+  if (!curQ) return;
+
+  const btnGiveUp = document.getElementById("btn-give-up");
+  if (btnGiveUp) {
+    btnGiveUp.disabled = true;
+    btnGiveUp.textContent = "正在调取权威标答...";
+  }
+
+  try {
+    const res = await fetch(`/api/interview/${state.sessionId}/answer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question_id: curQ.id,
+        answer_text: "我不会，请教老师指点。",
+      }),
+    });
+
+    if (!res.ok) throw new Error("调取标答失败");
+    const result = await res.json();
+    state.currentStatus = result.status;
+
+    // 清空回答输入框
+    document.getElementById("answer-textarea").value = "";
+    updateCharCount(document.getElementById("answer-textarea"), "answer-char-count");
+
+    // 弹出即时反馈 Bottom Sheet（展示权威标答并支持 AI 朗读纠音）
+    showFeedbackModal(result.evaluation, curQ);
+  } catch (err) {
+    alert("调取标答失败: " + err.message);
+  } finally {
+    if (btnGiveUp) {
+      btnGiveUp.disabled = false;
+      btnGiveUp.textContent = "🤷 我不会 · 查看标答";
+    }
+  }
+}
+
+function stopRefAudio() {
+  if (state.refAudio) {
+    state.refAudio.pause();
+    state.refAudio = null;
+  }
+  state.isPlayingRefAudio = false;
+  const icon = document.getElementById("tts-modal-ref-icon");
+  const label = document.getElementById("tts-modal-ref-label");
+  const status = document.getElementById("modal-tts-ref-status");
+  const btn = document.getElementById("btn-tts-modal-ref");
+  if (icon) icon.textContent = "🔊";
+  if (label) label.textContent = "AI 朗读标答 · 纠音跟读";
+  if (status) status.style.display = "none";
+  if (btn) {
+    btn.style.background = "#eff6ff";
+    btn.style.borderColor = "#93c5fd";
+    btn.style.color = "#1d4ed8";
+  }
+}
+
+function toggleModalRefAudio() {
+  if (state.isPlayingRefAudio) {
+    stopRefAudio();
+    return;
+  }
+
+  stopVoice();
+  stopRefAudio();
+
+  const refText = document.getElementById("modal-reference-answer")?.textContent?.trim();
+  if (!refText || refText.startsWith("（本题注重")) return;
+
+  // 清洗掉示范提示词，截取合理长度用于 TTS 播放
+  let cleanText = refText.replace(/^[🗣️\s]*考场标准口语化作答示范[：:\s]*/, "").trim();
+  if (cleanText.length > 500) {
+    cleanText = cleanText.substring(0, 500);
+  }
+
+  const icon = document.getElementById("tts-modal-ref-icon");
+  const label = document.getElementById("tts-modal-ref-label");
+  const status = document.getElementById("modal-tts-ref-status");
+  const btn = document.getElementById("btn-tts-modal-ref");
+
+  state.isPlayingRefAudio = true;
+  if (icon) icon.textContent = "⏹️";
+  if (label) label.textContent = "停止朗读";
+  if (status) status.style.display = "flex";
+  if (btn) {
+    btn.style.background = "#fee2e2";
+    btn.style.borderColor = "#fca5a5";
+    btn.style.color = "#b91c1c";
+  }
+
+  // 标答朗读采用正常自然原速（rate=+0%），帮助考生听清发音细节并跟读
+  const audioUrl = `/api/audio/tts?text=${encodeURIComponent(cleanText)}&rate=%2B0%25`;
+  const audio = new Audio(audioUrl);
+  state.refAudio = audio;
+
+  audio.onended = () => {
+    stopRefAudio();
+  };
+
+  audio.onerror = () => {
+    console.warn("标答音频加载失败，尝试降级本地合成");
+    stopRefAudio();
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      const isEn = /[a-zA-Z]{5,}/.test(cleanText);
+      utterance.lang = isEn ? "en-US" : "zh-CN";
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  audio.play().catch((err) => {
+    console.warn("音频播放受限:", err);
+    stopRefAudio();
+  });
+}
+
+function playSingleRefAudio(text) {
+  if (!text) return;
+  stopVoice();
+  stopRefAudio();
+  const cleanText = text.replace(/^[🗣️\s]*考场标准口语化作答示范[：:\s]*/, "").trim().substring(0, 500);
+  const audioUrl = `/api/audio/tts?text=${encodeURIComponent(cleanText)}&rate=%2B0%25`;
+  const audio = new Audio(audioUrl);
+  state.refAudio = audio;
+  audio.play().catch(console.warn);
+}
+
 function showFeedbackModal(evaluation, question) {
+  stopRefAudio();
   document.getElementById("modal-score").textContent = evaluation.score;
   document.getElementById("modal-feedback-text").textContent = evaluation.feedback;
   document.getElementById("modal-reference-answer").textContent =
@@ -737,6 +929,9 @@ function renderCurrentState() {
 
   const q = status.current_question;
   if (!q) return;
+
+  // 0. 听力训练盲测：每道题目默认开启高斯模糊遮罩！
+  setQuestionBlur(true);
 
   // 1. 设置分类徽标与题目
   const catBadge = document.getElementById("question-category-badge");
@@ -797,6 +992,7 @@ function renderReportView() {
   const isSpecialized = state.mode === "specialized" || state.currentStatus?.mode === "specialized";
   updateProgress(100, isSpecialized ? "专项复盘评估报告" : "面试终审报告");
   stopVoice();
+  stopRefAudio();
   stopExamTimer();
   stopResponseDeadline();
 
@@ -832,6 +1028,9 @@ function renderReportView() {
     item.style.padding = "10px 12px";
     item.style.background = "#f8fafc";
 
+    const refAnswerEscaped = escapeHtml(rec.question.reference_answer || "（本题注重思维阐述与逻辑完整性）");
+    const rawRefJson = JSON.stringify(rec.question.reference_answer || "");
+
     item.innerHTML = `
       <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
         <span style="font-weight: 600; color: #1e3a8a;">Q${idx + 1}. [${getCategoryName(rec.question.category)}] ${rec.question.subcategory}</span>
@@ -839,7 +1038,16 @@ function renderReportView() {
       </div>
       <div style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">${rec.question.question}</div>
       <div style="font-size: 0.78rem; color: #64748b; margin-bottom: 4px;"><strong>你的回答：</strong>${escapeHtml(rec.user_answer)}</div>
-      <div style="font-size: 0.78rem; color: #1e40af; background: #eff6ff; padding: 6px 8px; border-radius: 6px;"><strong>考官评语：</strong>${rec.evaluation.feedback}</div>
+      <div style="font-size: 0.78rem; color: #1e40af; background: #eff6ff; padding: 6px 8px; border-radius: 6px; margin-bottom: 6px;"><strong>考官评语：</strong>${rec.evaluation.feedback}</div>
+      <div style="font-size: 0.78rem; color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 6px 8px; border-radius: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+          <strong>🎯 标准参考回答：</strong>
+          <button type="button" class="ref-tts-btn-small" onclick='playSingleRefAudio(${rawRefJson})'>
+            <span>🔊 听标答朗读</span>
+          </button>
+        </div>
+        <div style="white-space: pre-wrap; line-height: 1.5;">${refAnswerEscaped}</div>
+      </div>
     `;
     reviewList.appendChild(item);
   });
@@ -876,3 +1084,5 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+window.playSingleRefAudio = playSingleRefAudio;

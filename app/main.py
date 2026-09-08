@@ -150,16 +150,17 @@ async def get_session_report(session_id: str):
 
 
 @app.get("/api/audio/tts")
-async def get_tts_audio(text: str, voice: Optional[str] = None):
+async def get_tts_audio(text: str, voice: Optional[str] = None, rate: Optional[str] = None):
     """
-    提供真实考官语音合成音频（高保真神经人声 MP3 格式）。
-    中文为沉稳专业的男考官 (Yunxi)，英文为学术男教授 (Christopher)。
+    提供真实考官与标准回答语音合成音频（高保真神经人声 MP3 格式）。
+    中文为沉稳专业的男考官 (Yunjian)，英文为学术男教授 (Christopher)。
+    支持通过 rate 参数微调朗读语速（如标答跟读纠音采用标准原速 +0%）。
     具备服务端 MD5 缓存，秒级响应。
     """
     if not text.strip():
         raise HTTPException(status_code=400, detail="文本内容不能为空")
     try:
-        audio_file = await get_or_generate_audio(text, voice)
+        audio_file = await get_or_generate_audio(text, voice=voice, rate=rate)
         return FileResponse(
             str(audio_file),
             media_type="audio/mpeg",

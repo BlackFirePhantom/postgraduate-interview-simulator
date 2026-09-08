@@ -132,3 +132,45 @@ def test_specialized_general_lifecycle():
     assert "综合素质与抗压专项" in report["verdict"]
 
 
+def test_give_up_answer_flow():
+    """验证'我不会/查看标答'触发0分并给出引导和标答"""
+    manager = SessionManager()
+    session = manager.create_session(questions_per_stage=1)
+    session.start_with_intro("老师好，我参加面试。")
+
+    cur_q = session.get_current_question()
+    assert cur_q is not None
+    # 候选人点击'我不会'
+    eval_res = session.submit_answer(cur_q.id, "我不会，请教老师指点。")
+    assert eval_res.score == 0
+    assert "主动放弃" in eval_res.feedback
+    assert "0分" in eval_res.feedback
+    assert len(cur_q.reference_answer) > 0
+
+
+def test_question_bank_language_purity():
+    """验证题库中英文题目与标答严格纯洁性（英文无汉字中文标点，中文无冗余英文括号夹杂）"""
+    import json
+    import re
+    from pathlib import Path
+
+    bank_path = Path("app/data/question_bank.json")
+    with open(bank_path, "r", encoding="utf-8") as f:
+        questions = json.load(f)
+
+    zh_pattern = re.compile(r"[\u4e00-\u9fa5]")
+    full_width_punct = set("，。！？：“”（）【】—、…")
+
+    for q in questions:
+        if q["category"] == "english":
+            # 英语题目不得含有中文字符或中文全角标点
+            assert not zh_pattern.search(q["question"]), f"EN Q contains Chinese: {q['id']}"
+            assert not any(c in full_width_punct for c in q["question"]), f"EN Q contains full-width punct: {q['id']}"
+            assert not zh_pattern.search(q["reference_answer"]), f"EN Ref contains Chinese: {q['id']}"
+            assert not any(c in full_width_punct for c in q["reference_answer"]), f"EN Ref contains full-width punct: {q['id']}"
+        else:
+            # 中文题目与标答不得包含英文括号夹杂，如（Fermi Level）或（Setup Time）
+            bracket_en = re.findall(r"[（\(]([A-Za-z]{2,}(?:\s+[A-Za-z]+)+)[）\)]", q["question"])
+            assert not bracket_en, f"ZH Q contains English translation brackets: {q['id']} -> {bracket_en}"
+
+

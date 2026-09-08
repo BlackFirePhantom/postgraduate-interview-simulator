@@ -520,3 +520,78 @@ body {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
+/* 听力盲测：题目虚化效果 */
+.question-text.blurred {
+  filter: blur(9px);
+  user-select: none;
+  -webkit-user-select: none;
+  opacity: 0.32;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.blur-overlay-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #1e3a8a;
+  background: rgba(248, 250, 252, 0.78);
+  backdrop-filter: blur(2px);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 6px 12px;
+  z-index: 2;
+  user-select: none;
+  border: 1px dashed #93c5fd;
+  transition: all 0.25s ease;
+}
+
+.blur-overlay-hint:hover {
+  background: rgba(239, 246, 255, 0.9);
+  border-color: #2563eb;
+}
+
+/* “我不会”按钮微动效 */
+#btn-give-up {
+  transition: all 0.2s ease;
+}
+
+#btn-give-up:hover {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+}
+
+#btn-give-up:active {
+  transform: scale(0.96);
+}
+
+/* 标答朗读按钮与声波 */
+#btn-tts-modal-ref:hover {
+  background: #dbeafe !important;
+  border-color: #3b82f6 !important;
+}
+
+.ref-tts-btn-small {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #1d4ed8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ref-tts-btn-small:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+
