@@ -3589,7 +3589,7 @@
       "Paragraph 2: Three National First Prizes in IC competition, embedded chip, and AI robotics",
       "Paragraph 3: Future research aspirations in DSA, heterogeneous computing, and hardware security"
     ],
-    "reference_answer": "Good morning, respected professors! My name is Liu Zijun, a senior undergraduate student majoring in Microelectronics Science and Engineering at Hubei University of Technology. Over the past three years, I have maintained a solid academic foundation with a GPA of 3.69 out of 5.0, ranking in the top 14% of my major, and passed CET-6 with fluent English technical literature reading and communication capabilities.\n\nFirmly believing that algorithms must be grounded in physical silicon to unleash true computational efficiency, I served as a core member and won three First Prizes in prestigious national engineering competitions. Most notably, in the 10th National Integrated Circuit Competition, our team designed an FPGA-based SoC dedicated hardware accelerator for industrial defect inspection, winning the National First Prize and Enterprise Grand Award, ranking First Place nationwide. Furthermore, I developed high-throughput Vitis HLS operators and edge AI vision platforms, securing two additional National First Prizes in the National Embedded Chip Competition and the China Robot and AI Competition.\n\nDriven by these experiences, I am eager to pursue my master's degree at your esteemed university, focusing on domain-specific architectures, heterogeneous computing, and hardware security. I am fully prepared to dedicate my engineering skills and academic passion to cutting-edge research and make meaningful contributions to the semiconductor industry. Thank you very much for your time and consideration!",
+    "reference_answer": "Good morning, respected professors! My name is Liu Zijun, a senior undergraduate student majoring in Microelectronics Science and Engineering at Hubei University of Technology. Over the past three years, I have maintained a solid academic foundation with a GPA of 3.69 out of 5.0, ranking in the top 14% of my major, and passed CET-6 with fluent English technical literature reading and communication capabilities.\n\nDuring college, I focused on FPGA and SoC design. As a core member, I won three National First Prizes. In the National Integrated Circuit Competition, our team built an FPGA hardware accelerator and won the Grand Award, ranking First Place nationwide. In addition, I developed HLS modules and edge AI systems, winning two more National First Prizes in embedded and robotics competitions. These projects gave me strong hands-on engineering skills.\n\nDriven by these experiences, I am eager to pursue my master's degree at your esteemed university, focusing on domain-specific architectures, heterogeneous computing, and hardware security. I am fully prepared to dedicate my engineering skills and academic passion to cutting-edge research and make meaningful contributions to the semiconductor industry. Thank you very much for your time and consideration!",
     "keywords": [
       "Liu Zijun",
       "Microelectronics",
@@ -3597,9 +3597,9 @@
       "GPA",
       "National First Prize",
       "Integrated Circuit",
-      "SoC",
       "FPGA",
-      "Vitis HLS",
+      "SoC",
+      "HLS",
       "heterogeneous computing",
       "hardware security"
     ]
