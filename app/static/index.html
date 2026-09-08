@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>保研面试模拟系统</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=2.1">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.2">
 </head>
 <body>
 
@@ -66,14 +66,61 @@
           选择实战演练模式：
         </label>
         <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button type="button" class="action-btn q-count-btn active" data-count="2" style="width: 100%; border-color: #dc2626; background: #fef2f2; color: #991b1b; font-weight: 700; padding: 10px 12px; text-align: left;">
-            🔥 20分钟全真保研高压考场 (强烈推荐)<br>
+          <!-- 模式 1: 20分钟全真考场 -->
+          <button type="button" class="action-btn mode-btn active" data-mode="full" style="width: 100%; border-color: #dc2626; background: #fef2f2; color: #991b1b; font-weight: 700; padding: 10px 12px; text-align: left;">
+            🔥 20分钟全真保研高压考场 (全流程模拟)<br>
             <span style="font-size: 0.74rem; font-weight: normal; color: #b91c1c;">11 道高压真题 (5道专业 + 3道英语占5分钟 + 3道综合) · 严格 30s 开口限时</span>
           </button>
-          <button type="button" class="action-btn q-count-btn" data-count="1" style="width: 100%; border-color: #cbd5e1; background: #ffffff; color: #475569; padding: 8px 12px; text-align: left;">
-            ⚡ 碎片时间极速自测版 (3题)<br>
+          
+          <!-- 模式 2: 碎片时间极速自测 -->
+          <button type="button" class="action-btn mode-btn" data-mode="quick" style="width: 100%; border-color: #cbd5e1; background: #ffffff; color: #475569; padding: 8px 12px; text-align: left;">
+            ⚡ 碎片时间极速自测版 (3题微测)<br>
             <span style="font-size: 0.72rem; color: #94a3b8;">共 3 题（1道专业 + 1道英语 + 1道综合）· 适合碎片时间快速演练</span>
           </button>
+
+          <!-- 模式 3: 单项专项强化特训 (NEW) -->
+          <button type="button" class="action-btn mode-btn" data-mode="specialized" style="width: 100%; border-color: #cbd5e1; background: #ffffff; color: #475569; padding: 8px 12px; text-align: left;">
+            🎯 单项专项强化特训 (针对性复习 · 自选题数)<br>
+            <span style="font-size: 0.72rem; color: #94a3b8;">单选专业课 / 英语日常 / 综合素质 · 自定义抽题量 · 免自我介绍直奔主题</span>
+          </button>
+        </div>
+
+        <!-- 专项特训配置子面板 -->
+        <div id="specialized-panel" style="display: none; margin-top: 10px; padding: 12px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px;">
+          <div style="font-size: 0.82rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+            1. 选择专项复习类别：
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px;">
+            <button type="button" class="spec-cat-btn active" data-cat="academic" style="padding: 8px 4px; font-size: 0.78rem; text-align: center; border-radius: 8px; border: 1.5px solid #2563eb; background: #eff6ff; color: #1d4ed8; font-weight: 700; cursor: pointer;">
+              💻 核心专业课<br><span style="font-size: 0.68rem; font-weight: normal; color: #3b82f6;">140+ 题</span>
+            </button>
+            <button type="button" class="spec-cat-btn" data-cat="english" style="padding: 8px 4px; font-size: 0.78rem; text-align: center; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer;">
+              🗣️ 英语日常<br><span style="font-size: 0.68rem; color: #94a3b8;">24 题</span>
+            </button>
+            <button type="button" class="spec-cat-btn" data-cat="general" style="padding: 8px 4px; font-size: 0.78rem; text-align: center; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer;">
+              🧠 综合素质<br><span style="font-size: 0.68rem; color: #94a3b8;">18 题</span>
+            </button>
+          </div>
+
+          <div style="font-size: 0.82rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+            2. 自选练习题数（从题库随机抽取）：
+          </div>
+          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <button type="button" class="spec-count-btn" data-count="3" style="flex: 1; padding: 6px 0; font-size: 0.78rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">3 题</button>
+            <button type="button" class="spec-count-btn active" data-count="5" style="flex: 1; padding: 6px 0; font-size: 0.78rem; border-radius: 6px; border: 1.5px solid #2563eb; background: #eff6ff; color: #1d4ed8; font-weight: 700; cursor: pointer;">5 题</button>
+            <button type="button" class="spec-count-btn" data-count="10" style="flex: 1; padding: 6px 0; font-size: 0.78rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">10 题</button>
+            <button type="button" class="spec-count-btn" data-count="15" style="flex: 1; padding: 6px 0; font-size: 0.78rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">15 题</button>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.76rem; color: #64748b;">
+            <span>或自定义输入题数：</span>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <input type="number" id="spec-custom-count" min="1" max="50" placeholder="5" style="width: 56px; padding: 4px 6px; text-align: center; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem;">
+              <span>题</span>
+            </div>
+          </div>
+          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e2e8f0; font-size: 0.74rem; color: #059669; display: flex; align-items: center; gap: 4px;">
+            <span>⚡ 专项练习特点：免去自我介绍，点击直接抽取第 1 题开答！</span>
+          </div>
         </div>
       </div>
 
@@ -306,6 +353,6 @@
 
 </div>
 
-<script src="/static/js/app.js?v=2.1"></script>
+<script src="/static/js/app.js?v=2.2"></script>
 </body>
 </html>

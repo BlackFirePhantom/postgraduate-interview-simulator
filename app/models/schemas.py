@@ -17,6 +17,12 @@ class Stage(str, Enum):
     SUMMARY = "summary"      # 总结阶段
 
 
+class InterviewMode(str, Enum):
+    FULL = "full"             # 20分钟全真综合实战 (11题)
+    QUICK = "quick"           # 碎片时间极速自测 (3题)
+    SPECIALIZED = "specialized"  # 单项专项特训
+
+
 class DetectedLanguage(str, Enum):
     ZH = "zh"
     EN = "en"
@@ -57,6 +63,8 @@ class InterviewRecord(BaseModel):
 
 class SessionStatus(BaseModel):
     session_id: str
+    mode: InterviewMode = InterviewMode.FULL
+    target_category: Optional[QuestionCategory] = None
     current_stage: Stage
     stage_name_cn: str
     detected_language: Optional[DetectedLanguage] = None

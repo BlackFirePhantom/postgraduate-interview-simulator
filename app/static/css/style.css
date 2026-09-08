@@ -503,3 +503,20 @@ body {
   0% { opacity: 0.6; }
   100% { opacity: 1; }
 }
+
+/* 专项特训模式样式 */
+.spec-cat-btn, .spec-count-btn {
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.spec-cat-btn:active, .spec-count-btn:active {
+  transform: scale(0.97);
+}
+
+#spec-custom-count:focus {
+  outline: none;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+

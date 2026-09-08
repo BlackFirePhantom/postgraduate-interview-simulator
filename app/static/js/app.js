@@ -5,7 +5,10 @@
 
 const state = {
   sessionId: null,
+  mode: "full",           // "full" (20分钟考场), "quick" (3题极速), "specialized" (单项专项)
   questionsPerStage: 2,   // 2 表示 20分钟高压实战(11题)，1 表示极速自测(3题)
+  specializedCategory: "academic", // "academic", "english", "general"
+  specializedCount: 5,    // 专项特训题数 (默认5题)
   currentStatus: null,
   isRecording: false,
   recognition: null,
@@ -189,10 +192,33 @@ function setupEventListeners() {
     }
   });
 
-  // 1. 题量/模式选择
-  document.querySelectorAll(".q-count-btn").forEach((btn) => {
+  // 1. 实战模式与专项配置选择
+  const specPanel = document.getElementById("specialized-panel");
+  const btnStart = document.getElementById("btn-start-interview");
+
+  function updateStartButtonUI() {
+    if (!btnStart) return;
+    if (state.mode === "specialized") {
+      const catNameMap = {
+        academic: "核心专业课",
+        english: "英语日常口语",
+        general: "综合素质抗压",
+      };
+      const catName = catNameMap[state.specializedCategory] || "专项";
+      btnStart.textContent = `开始【${catName}】特训 · 随机 ${state.specializedCount} 题`;
+      btnStart.style.background = "linear-gradient(135deg, #059669, #10b981)";
+    } else if (state.mode === "quick") {
+      btnStart.textContent = "进入考场 · 开启碎片3题自测";
+      btnStart.style.background = "linear-gradient(135deg, #2563eb, #3b82f6)";
+    } else {
+      btnStart.textContent = "进入考场 · 开启20分钟高压实战";
+      btnStart.style.background = "linear-gradient(135deg, #991b1b, #dc2626)";
+    }
+  }
+
+  document.querySelectorAll(".mode-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".q-count-btn").forEach((b) => {
+      document.querySelectorAll(".mode-btn").forEach((b) => {
         b.classList.remove("active");
         b.style.borderColor = "#cbd5e1";
         b.style.background = "#ffffff";
@@ -200,13 +226,93 @@ function setupEventListeners() {
         b.style.fontWeight = "normal";
       });
       btn.classList.add("active");
-      btn.style.borderColor = "#dc2626";
-      btn.style.background = "#fef2f2";
-      btn.style.color = "#991b1b";
-      btn.style.fontWeight = "700";
-      state.questionsPerStage = parseInt(btn.getAttribute("data-count"), 10);
+      state.mode = btn.getAttribute("data-mode");
+
+      if (state.mode === "full") {
+        btn.style.borderColor = "#dc2626";
+        btn.style.background = "#fef2f2";
+        btn.style.color = "#991b1b";
+        btn.style.fontWeight = "700";
+        state.questionsPerStage = 2;
+        if (specPanel) specPanel.style.display = "none";
+      } else if (state.mode === "quick") {
+        btn.style.borderColor = "#2563eb";
+        btn.style.background = "#eff6ff";
+        btn.style.color = "#1d4ed8";
+        btn.style.fontWeight = "700";
+        state.questionsPerStage = 1;
+        if (specPanel) specPanel.style.display = "none";
+      } else if (state.mode === "specialized") {
+        btn.style.borderColor = "#059669";
+        btn.style.background = "#ecfdf5";
+        btn.style.color = "#065f46";
+        btn.style.fontWeight = "700";
+        if (specPanel) specPanel.style.display = "block";
+      }
+      updateStartButtonUI();
     });
   });
+
+  // 专项类别选择
+  document.querySelectorAll(".spec-cat-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".spec-cat-btn").forEach((b) => {
+        b.classList.remove("active");
+        b.style.borderColor = "#cbd5e1";
+        b.style.background = "#ffffff";
+        b.style.color = "#475569";
+        b.style.fontWeight = "normal";
+      });
+      btn.classList.add("active");
+      btn.style.borderColor = "#2563eb";
+      btn.style.background = "#eff6ff";
+      btn.style.color = "#1d4ed8";
+      btn.style.fontWeight = "700";
+      state.specializedCategory = btn.getAttribute("data-cat");
+      updateStartButtonUI();
+    });
+  });
+
+  // 专项题数快捷按钮
+  document.querySelectorAll(".spec-count-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".spec-count-btn").forEach((b) => {
+        b.classList.remove("active");
+        b.style.borderColor = "#cbd5e1";
+        b.style.background = "#ffffff";
+        b.style.color = "#475569";
+        b.style.fontWeight = "normal";
+      });
+      btn.classList.add("active");
+      btn.style.borderColor = "#2563eb";
+      btn.style.background = "#eff6ff";
+      btn.style.color = "#1d4ed8";
+      btn.style.fontWeight = "700";
+      state.specializedCount = parseInt(btn.getAttribute("data-count"), 10);
+      const customInput = document.getElementById("spec-custom-count");
+      if (customInput) customInput.value = "";
+      updateStartButtonUI();
+    });
+  });
+
+  // 专项题数自定义输入
+  const customCountInput = document.getElementById("spec-custom-count");
+  if (customCountInput) {
+    customCountInput.addEventListener("input", () => {
+      const val = parseInt(customCountInput.value, 10);
+      if (val && val >= 1 && val <= 50) {
+        document.querySelectorAll(".spec-count-btn").forEach((b) => {
+          b.classList.remove("active");
+          b.style.borderColor = "#cbd5e1";
+          b.style.background = "#ffffff";
+          b.style.color = "#475569";
+          b.style.fontWeight = "normal";
+        });
+        state.specializedCount = val;
+        updateStartButtonUI();
+      }
+    });
+  }
 
   // 2. 开始面试
   document.getElementById("btn-start-interview").addEventListener("click", startInterview);
@@ -484,31 +590,47 @@ async function startInterview() {
   btn.textContent = "正在创建考场并联络考官...";
 
   try {
-    const res = await fetch(`/api/interview/start?questions_per_stage=${state.questionsPerStage}`, {
-      method: "POST",
-    });
+    let url = "";
+    if (state.mode === "specialized") {
+      url = `/api/interview/start?mode=specialized&category=${state.specializedCategory}&count=${state.specializedCount}`;
+    } else if (state.mode === "quick") {
+      url = `/api/interview/start?mode=quick&questions_per_stage=1`;
+    } else {
+      url = `/api/interview/start?mode=full&questions_per_stage=${state.questionsPerStage}`;
+    }
+
+    const res = await fetch(url, { method: "POST" });
     if (!res.ok) throw new Error("启动考场失败");
     const data = await res.json();
     state.sessionId = data.session_id;
     state.currentStatus = data;
 
-    switchView("intro");
-    updateProgress(10, "环节：自我介绍");
+    if (state.mode === "specialized") {
+      // 专项练习：免去冗长自我介绍，直接进入第一题提问！
+      stopExamTimer();
+      examTimerBar.style.display = "none";
+      renderCurrentState();
+    } else {
+      switchView("intro");
+      updateProgress(10, "环节：自我介绍");
 
-    // 开启 20 分钟全真考试总计时器！
-    startExamTimer();
+      // 开启 20 分钟全真考试总计时器！
+      startExamTimer();
 
-    // 自动播放主考官开场问候与引导
-    playInterviewerVoice(
-      "同学注意把控时间！今天我们已经面试了几十名考生，不要讲空话套话。请直接用最精炼的语言，汇报你的核心硬核竞争力与科研实践成果！",
-      document.getElementById("intro-avatar"),
-      document.getElementById("intro-speaking-status")
-    );
+      // 自动播放主考官开场问候与引导
+      playInterviewerVoice(
+        "同学注意把控时间！今天我们已经面试了几十名考生，不要讲空话套话。请直接用最精炼的语言，汇报你的核心硬核竞争力与科研实践成果！",
+        document.getElementById("intro-avatar"),
+        document.getElementById("intro-speaking-status")
+      );
+    }
   } catch (err) {
     alert("连接考场服务失败: " + err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = "进入考场 · 开启20分钟高压实战";
+    if (typeof updateStartButtonUI === "function") {
+      updateStartButtonUI();
+    }
   }
 }
 
@@ -652,8 +774,12 @@ function renderCurrentState() {
   document.getElementById("tips-arrow").textContent = "▼";
 
   // 4. 更新进度条
-  const progressPercent = Math.round((status.current_question_index / (status.total_questions + 1)) * 100);
-  updateProgress(progressPercent, status.stage_name_cn);
+  const progressPercent = Math.round((status.current_question_index / Math.max(status.total_questions, 1)) * 100);
+  let stageLabel = status.stage_name_cn;
+  if (state.mode === "specialized" || status.mode === "specialized") {
+    stageLabel = `专项特训 (${status.current_question_index}/${status.total_questions})`;
+  }
+  updateProgress(progressPercent, stageLabel);
 
   // 5. 启动 30 秒限时作答开口计时器！
   startResponseDeadline();
@@ -668,7 +794,8 @@ function renderCurrentState() {
 
 function renderReportView() {
   switchView("report");
-  updateProgress(100, "面试终审报告");
+  const isSpecialized = state.mode === "specialized" || state.currentStatus?.mode === "specialized";
+  updateProgress(100, isSpecialized ? "专项复盘评估报告" : "面试终审报告");
   stopVoice();
   stopExamTimer();
   stopResponseDeadline();

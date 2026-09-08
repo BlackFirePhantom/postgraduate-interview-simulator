@@ -7,6 +7,7 @@ from app.models.schemas import (
     Stage,
     QuestionCategory,
     DetectedLanguage,
+    InterviewMode,
     QuestionItem,
     InterviewRecord,
     SessionStatus,
@@ -28,9 +29,19 @@ STAGE_NAME_MAP = {
 class InterviewSession:
     """单个考生的模拟面试会话状态机"""
 
-    def __init__(self, session_id: str, questions_per_stage: int = 2):
+    def __init__(
+        self,
+        session_id: str,
+        questions_per_stage: int = 2,
+        mode: InterviewMode = InterviewMode.FULL,
+        target_category: Optional[QuestionCategory] = None,
+        specialized_count: Optional[int] = None,
+    ):
         self.session_id = session_id
         self.questions_per_stage = questions_per_stage
+        self.mode = mode
+        self.target_category = target_category
+        self.specialized_count = specialized_count
         self.created_at = time.time()
         
         # 流程与阶段控制
@@ -46,6 +57,47 @@ class InterviewSession:
         self.records: List[InterviewRecord] = []
         self.is_finished: bool = False
         self.overall_report: Optional[Dict] = None
+
+    def start_specialized(
+        self,
+        category: Optional[QuestionCategory] = None,
+        count: Optional[int] = None,
+    ) -> SessionStatus:
+        """
+        开启单项专项练习（免自我介绍，直奔题目）：
+        1. 针对指定分类从题库中随机抽取指定数量题目
+        2. 直达对应阶段，当前题目即刻就绪发问
+        """
+        self.mode = InterviewMode.SPECIALIZED
+        target_cat = category or self.target_category or QuestionCategory.ACADEMIC
+        target_cnt = count or self.specialized_count or 5
+        self.target_category = target_cat
+        self.specialized_count = target_cnt
+
+        stage = self._map_category_to_stage(target_cat)
+        self.planned_stages = [stage]
+        self.current_stage = stage
+
+        # 如果是英语专项，标记为英文
+        if target_cat == QuestionCategory.ENGLISH:
+            self.detected_language = DetectedLanguage.EN
+            self.language_reason = "单项英语专项强化特训"
+        else:
+            self.detected_language = DetectedLanguage.ZH
+            self.language_reason = f"单项{target_cat.value}专项特训"
+
+        sampled = question_repo.sample_questions(target_cat, target_cnt)
+        self.question_queue = sampled
+        self.current_index = 0
+
+        if not self.question_queue:
+            self.current_stage = Stage.SUMMARY
+            self.is_finished = True
+            self.overall_report = self._generate_report()
+        else:
+            self.current_stage = stage
+
+        return self.get_status()
 
     def start_with_intro(self, intro_text: str) -> SessionStatus:
         """
@@ -169,18 +221,33 @@ class InterviewSession:
                 breakdown[cat] = 0
 
         # 综合评语
-        if avg_score >= 88:
-            verdict = "【拟录取 / 优秀水平】考生学术基础扎实，临场反应敏锐，表达清晰沉稳，符合重点实验室选拔要求。"
-        elif avg_score >= 75:
-            verdict = "【备选良好】考生综合素质较好，针对专业与通用问题具备较好分析能力，若在英语或深层原理上稍加精进将更有竞争力。"
+        if self.mode == InterviewMode.SPECIALIZED:
+            cat_cn = {
+                QuestionCategory.ACADEMIC.value: "核心专业课",
+                QuestionCategory.ENGLISH.value: "英语口语与文献",
+                QuestionCategory.GENERAL.value: "综合素质与抗压",
+            }.get(self.target_category.value if self.target_category else "", "单项专项")
+            if avg_score >= 88:
+                verdict = f"【{cat_cn}专项 · 优秀通过】表现优异，概念精准扎实，回答逻辑严谨完整，已完全具备冲刺顶尖院校的实力！"
+            elif avg_score >= 75:
+                verdict = f"【{cat_cn}专项 · 良好水平】较好掌握了核心知识点与答题框架，建议对照参考解析进一步完善细节，力争满分。"
+            else:
+                verdict = f"【{cat_cn}专项 · 仍需强化】部分关键概念或表达存在遗漏与迟疑，建议反复抽题专项特训，夯实薄弱点。"
         else:
-            verdict = "【需积极巩固】考生基础概念或英语表达存在明显薄弱项，建议重点强化参考要点并加强实战演练。"
+            if avg_score >= 88:
+                verdict = "【拟录取 / 优秀水平】考生学术基础扎实，临场反应敏锐，表达清晰沉稳，符合重点实验室选拔要求。"
+            elif avg_score >= 75:
+                verdict = "【备选良好】考生综合素质较好，针对专业与通用问题具备较好分析能力，若在英语或深层原理上稍加精进将更有竞争力。"
+            else:
+                verdict = "【需积极巩固】考生基础概念或英语表达存在明显薄弱项，建议重点强化参考要点并加强实战演练。"
 
         return {
             "average_score": avg_score,
             "category_breakdown": breakdown,
             "total_questions_answered": len(self.records),
             "verdict": verdict,
+            "mode": self.mode.value,
+            "target_category": self.target_category.value if self.target_category else None,
             "intro_language": self.detected_language.value if self.detected_language else "unknown",
             "language_reason": self.language_reason,
         }
@@ -196,6 +263,8 @@ class InterviewSession:
         cur_q = self.get_current_question()
         return SessionStatus(
             session_id=self.session_id,
+            mode=self.mode,
+            target_category=self.target_category,
             current_stage=self.current_stage,
             stage_name_cn=STAGE_NAME_MAP.get(self.current_stage, "面试进行中"),
             detected_language=self.detected_language,
@@ -225,10 +294,22 @@ class SessionManager:
     def __init__(self):
         self._sessions: Dict[str, InterviewSession] = {}
 
-    def create_session(self, questions_per_stage: Optional[int] = None) -> InterviewSession:
+    def create_session(
+        self,
+        questions_per_stage: Optional[int] = None,
+        mode: InterviewMode = InterviewMode.FULL,
+        target_category: Optional[QuestionCategory] = None,
+        specialized_count: Optional[int] = None,
+    ) -> InterviewSession:
         q_count = questions_per_stage or settings.QUESTIONS_PER_STAGE
         sid = str(uuid.uuid4())[:8]
-        session = InterviewSession(session_id=sid, questions_per_stage=q_count)
+        session = InterviewSession(
+            session_id=sid,
+            questions_per_stage=q_count,
+            mode=mode,
+            target_category=target_category,
+            specialized_count=specialized_count,
+        )
         self._sessions[sid] = session
         return session
 

@@ -19,6 +19,7 @@ from app.models.schemas import (
     AnswerRequest,
     QuestionCategory,
     QuestionItem,
+    InterviewMode,
 )
 
 
@@ -73,9 +74,24 @@ async def root():
 
 
 @app.post("/api/interview/start", response_model=SessionStatus)
-async def start_interview(questions_per_stage: Optional[int] = Query(None, ge=1, le=5)):
-    """开启一场全新的保研模拟面试"""
-    session = session_manager.create_session(questions_per_stage=questions_per_stage)
+async def start_interview(
+    questions_per_stage: Optional[int] = Query(None, ge=1, le=5),
+    mode: Optional[InterviewMode] = Query(None),
+    category: Optional[QuestionCategory] = Query(None),
+    count: Optional[int] = Query(None, ge=1, le=50),
+):
+    """开启一场全新的保研模拟面试或单项专项练习"""
+    actual_mode = mode or InterviewMode.FULL
+    session = session_manager.create_session(
+        questions_per_stage=questions_per_stage,
+        mode=actual_mode,
+        target_category=category,
+        specialized_count=count,
+    )
+    if actual_mode == InterviewMode.SPECIALIZED:
+        target_cat = category or QuestionCategory.ACADEMIC
+        target_cnt = count or 5
+        session.start_specialized(category=target_cat, count=target_cnt)
     return session.get_status()
 
 

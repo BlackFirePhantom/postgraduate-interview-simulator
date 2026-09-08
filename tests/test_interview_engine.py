@@ -85,3 +85,50 @@ def test_timeout_zero_score():
     assert eval_res.score == 0
     assert "0分" in eval_res.feedback or "未开口" in eval_res.feedback or "超时" in eval_res.feedback
 
+
+def test_specialized_academic_practice():
+    """验证核心专业课专项练习（免自我介绍，自定义5题随机抽取）"""
+    manager = SessionManager()
+    session = manager.create_session()
+    status = session.start_specialized(category=QuestionCategory.ACADEMIC, count=5)
+
+    assert status.total_questions == 5
+    assert status.current_question_index == 1
+    assert status.current_question is not None
+    assert status.current_question.category == QuestionCategory.ACADEMIC
+    assert all(q.category == QuestionCategory.ACADEMIC for q in session.question_queue)
+    assert status.stage_name_cn == "专业问题考查"
+
+
+def test_specialized_english_practice():
+    """验证英语专项练习（语言识别为EN，自定义3题随机抽取）"""
+    manager = SessionManager()
+    session = manager.create_session()
+    status = session.start_specialized(category=QuestionCategory.ENGLISH, count=3)
+
+    assert status.total_questions == 3
+    assert status.detected_language == DetectedLanguage.EN
+    assert status.current_question is not None
+    assert status.current_question.category == QuestionCategory.ENGLISH
+    assert all(q.category == QuestionCategory.ENGLISH for q in session.question_queue)
+
+
+def test_specialized_general_lifecycle():
+    """验证综合素质专项作答至结束并生成专项终审报告"""
+    manager = SessionManager()
+    session = manager.create_session()
+    session.start_specialized(category=QuestionCategory.GENERAL, count=3)
+
+    while not session.is_finished:
+        cur_q = session.get_current_question()
+        assert cur_q is not None
+        assert cur_q.category == QuestionCategory.GENERAL
+        res = session.submit_answer(cur_q.id, "在实际科研与团队协作中，我会保持积极心态，主动与导师和同门沟通并寻找解决方案。")
+        assert res.score > 0
+
+    report = session.overall_report
+    assert report is not None
+    assert report["total_questions_answered"] == 3
+    assert "综合素质与抗压专项" in report["verdict"]
+
+

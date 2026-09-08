@@ -78,3 +78,44 @@ def test_api_tts_endpoint():
     assert response.headers["content-type"] == "audio/mpeg"
     assert len(response.content) > 100
 
+
+def test_api_specialized_mode_flow():
+    # 1. 启动专项练习模式（专业课，随机抽取2题，无需自我介绍）
+    res = client.post("/api/interview/start?mode=specialized&category=academic&count=2")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["mode"] == "specialized"
+    assert data["target_category"] == "academic"
+    assert data["total_questions"] == 2
+    assert data["current_question_index"] == 1
+    assert data["current_question"]["category"] == "academic"
+    session_id = data["session_id"]
+
+    # 2. 直接提交第一题回答
+    q1_id = data["current_question"]["id"]
+    res_ans1 = client.post(
+        f"/api/interview/{session_id}/answer",
+        json={"question_id": q1_id, "answer_text": "专业课论述完整，核心原理阐述清楚，逻辑层层递进。"}
+    )
+    assert res_ans1.status_code == 200
+    status1 = res_ans1.json()["status"]
+    assert status1["current_question_index"] == 2
+
+    # 3. 提交第二题回答并结束
+    q2_id = status1["current_question"]["id"]
+    res_ans2 = client.post(
+        f"/api/interview/{session_id}/answer",
+        json={"question_id": q2_id, "answer_text": "第二题重点说明架构优化和工程调试实现要点。"}
+    )
+    assert res_ans2.status_code == 200
+    status2 = res_ans2.json()["status"]
+    assert status2["is_finished"] is True
+
+    # 4. 获取专项复盘报告
+    res_rep = client.get(f"/api/interview/{session_id}/report")
+    assert res_rep.status_code == 200
+    report = res_rep.json()
+    assert report["total_questions_answered"] == 2
+    assert "核心专业课专项" in report["verdict"]
+
+
