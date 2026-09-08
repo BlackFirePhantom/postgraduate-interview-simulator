@@ -162,6 +162,8 @@ def test_question_bank_language_purity():
     full_width_punct = set("，。！？：“”（）【】—、…")
 
     for q in questions:
+        assert q["reference_answer"], f"Empty reference answer in {q['id']}"
+        assert not q["reference_answer"].endswith(('（', '【', '、', '，', '“', '‘', '(', '\"')), f"Truncated reference answer in {q['id']}"
         if q["category"] == "english":
             # 英语题目不得含有中文字符或中文全角标点
             assert not zh_pattern.search(q["question"]), f"EN Q contains Chinese: {q['id']}"

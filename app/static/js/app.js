@@ -177,6 +177,27 @@ function stopResponseDeadline() {
   }
 }
 
+// ---------------- 自我介绍黄金三段式标准回答 ----------------
+const GOLDEN_INTROS = {
+  zh: `各位老师好！我叫刘子俊，来自湖北工业大学芯片产业学院微电子科学与工程专业。本科前三年，我学业扎实，综合绩点 GPA 为 3.69/5.0，专业排名前 14%（17/123），《CMOS集成电路设计》取得 97 分、《半导体物理》95 分，高分通过大学英语六级；同时，我参与了脉冲激光表面微纳刻蚀课题研究，具备扎实的微电子理论功底与严谨求实的科研素养。
+
+我深信算法唯有扎根物理硅片才能释放极致算力。大学期间，我作为核心主力斩获了三项沉甸甸的国家级一等奖：在第十届集创赛中，我在异构 SoC 芯片上自主定制了目标检测硬件加速器与高速数据传输系统，以全国第一名的成绩斩获全国总决赛一等奖及企业大奖；在第八届嵌入式芯片大赛中，我基于高层次综合工具攻克了算子并行流水，并部署了二值化神经网络，再获全国一等奖；此外还在第二十八届中国机器人及人工智能大赛中摘得全国一等奖。这些经历全面锻造了我从底层硬件逻辑、内核驱动到系统机电闭环的全栈工程落地与抗压排错能力。
+
+贵校在集成电路与电子信息领域实力雄厚。若能在此深造，我希望深耕领域专用芯片架构、异构计算与硬件安全，把本科积累的 SoC 与硬件加速实践经验融入导师课题，踏实攻关、多出成果，为芯片自立自强贡献力量。谢谢各位老师！`,
+
+  en1: `Good morning, respected professors! My name is Liu Zijun, a senior undergraduate student majoring in Microelectronics Science and Engineering at Hubei University of Technology. Over the past three years, I have maintained a solid academic foundation with a GPA of 3.69 out of 5.0, ranking in the top 14% of my major, and passed CET-6 with fluent English technical literature reading and communication capabilities.
+
+Firmly believing that algorithms must be grounded in physical silicon to unleash true computational efficiency, I served as a core member and won three First Prizes in prestigious national engineering competitions. Most notably, in the 10th National Integrated Circuit Competition, our team designed an FPGA-based SoC dedicated hardware accelerator for industrial defect inspection, winning the National First Prize and Enterprise Grand Award, ranking First Place nationwide. Furthermore, I developed high-throughput Vitis HLS operators and edge AI vision platforms, securing two additional National First Prizes in the National Embedded Chip Competition and the China Robot and AI Competition.
+
+Driven by these experiences, I am eager to pursue my master's degree at your esteemed university, focusing on domain-specific architectures, heterogeneous computing, and hardware security. I am fully prepared to dedicate my engineering skills and academic passion to cutting-edge research and make meaningful contributions to the semiconductor industry. Thank you very much for your time and consideration!`,
+
+  en3: `Good morning, respected professors! Thank you very much for giving me this valuable opportunity. My name is Liu Zijun, a senior undergraduate majoring in Microelectronics Science and Engineering at the School of Chip Industry, Hubei University of Technology. Over the past three years, I have pursued academic excellence with great dedication, achieving a cumulative GPA of 3.69 out of 5.0 and ranking 17th out of 123 students, placing me in the top 14% of my major. I have established a robust microelectronics knowledge foundation, earning top scores in core courses such as 97 in CMOS Integrated Circuit Design, 98 in IC Design Practice, and 95 in Semiconductor Physics. In addition, I have passed CET-4 and CET-6, equipping me with fluent English technical literature reading and academic communication capabilities. Beyond coursework, my participation in the research project on pulsed laser micro-nano structuring and SEM characterization has instilled in me a rigorous scientific attitude and a deep respect for micro-physical laws.
+
+I firmly believe that advanced algorithms must be coupled with physical silicon to unleash their ultimate efficiency. Translating this philosophy into practice, I have led and contributed to multiple high-level national competitions, winning three prestigious National First Prizes. In the 10th National Integrated Circuit Competition, our team won the National First Prize and the Enterprise Grand Award, ranking First Place nationwide. Addressing the severe latency bottleneck in edge defect detection, I implemented a custom RTL-level DFL hardware accelerator on an Intel Cyclone V SoC FPGA, utilizing fixed-point pipelining, an on-chip exponential lookup table, and Master DMA bursts to offload non-linear operations from the CPU, achieving sub-0.05-second latency and 99.7% mechanical sorting accuracy. In the 8th Embedded Chip and System Design Competition, I resolved loop-carried dependencies in SHA-256 and Cholesky decomposition within the AMD Vitis L1 library, reconstructing parallel pipelines on PYNQ-Z2 and deploying binarized neural networks to secure another National First Prize. Furthermore, I earned a third National First Prize in the 28th China Robot and Artificial Intelligence Competition by deploying robust edge vision on Raspberry Pi 5. These experiences have forged my full-stack engineering capability spanning RTL logic, kernel drivers, and electromechanical integration, as well as an unyielding resilience when debugging complex systems.
+
+Your esteemed university is renowned for its distinguished academic heritage, top-tier research platforms, and pioneering contributions to integrated circuits. As Moore's Law slows down, domain-specific architectures, heterogeneous hardware-software co-design, and hardware security represent critical frontiers to overcome the memory wall and secure sensitive systems. If admitted to your university, I will dedicate my master's research to high-efficiency domain-specific acceleration architectures, heterogeneous computing, and hardware security chips. In my first year, I will solidify my theoretical foundations in advanced computer architectures and diligently track top-tier literature. In the following years, I will leverage my hands-on SoC and HLS expertise to tackle core research challenges under my advisor's guidance, aiming to publish high-impact papers, file patents, and validate physical prototypes. My ultimate goal is to grow into an innovative engineer equipped with both bottom-up device insights and top-down system architectural capabilities, contributing actively to China's semiconductor independence. Thank you very much for your time and consideration!`
+};
+
 function setupEventListeners() {
   // 0. 全局考官原声开关
   btnToggleVoice.addEventListener("click", () => {
@@ -320,18 +341,83 @@ function setupEventListeners() {
   // 2. 开始面试
   document.getElementById("btn-start-interview").addEventListener("click", startInterview);
 
-  // 3. 预设自我介绍文案 (刘子俊背景定制)
+  // 3. 预设自我介绍文案 (刘子俊背景定制黄金三段式)
   const introTextarea = document.getElementById("intro-textarea");
-  document.getElementById("btn-preset-zh").addEventListener("click", () => {
-    introTextarea.value =
-      "各位老师好，我叫刘子俊，来自微电子科学与工程专业。在本科期间我GPA 3.69，专业排名前14%，主持过一项国家级大创，并作为主力荣获集创赛企业大奖全国第一名、嵌赛FPGA全国一等奖、机器人大赛全国一等奖。主攻芯片底层硬件加速与软硬件协同。非常荣幸参加面试！";
+  document.getElementById("btn-preset-zh")?.addEventListener("click", () => {
+    introTextarea.value = GOLDEN_INTROS.zh;
     updateCharCount(introTextarea, "intro-char-count");
   });
 
-  document.getElementById("btn-preset-en").addEventListener("click", () => {
-    introTextarea.value =
-      "Good morning distinguished professors. My name is Liu Zijun, majoring in Microelectronics Science and Engineering. I have a solid foundation in semiconductor physics and IC design, with three national first prizes including the National IC Innovation Competition. I am eager to pursue my master's degree in your laboratory.";
+  document.getElementById("btn-preset-en")?.addEventListener("click", () => {
+    introTextarea.value = GOLDEN_INTROS.en1;
     updateCharCount(introTextarea, "intro-char-count");
+  });
+
+  document.getElementById("btn-preset-en-deep")?.addEventListener("click", () => {
+    introTextarea.value = GOLDEN_INTROS.en3;
+    updateCharCount(introTextarea, "intro-char-count");
+  });
+
+  // 3.1 自我介绍高分标答折叠抽屉与选项卡
+  let currentIntroRefTab = "zh";
+  const introRefDisplay = document.getElementById("intro-ref-text-display");
+  if (introRefDisplay) {
+    introRefDisplay.textContent = GOLDEN_INTROS.zh;
+  }
+
+  function setIntroRefTab(tab) {
+    currentIntroRefTab = tab;
+    stopRefAudio();
+    const tabConfigs = [
+      { id: "btn-intro-tab-zh", key: "zh" },
+      { id: "btn-intro-tab-en1", key: "en1" },
+      { id: "btn-intro-tab-en3", key: "en3" },
+    ];
+    tabConfigs.forEach(({ id, key }) => {
+      const b = document.getElementById(id);
+      if (!b) return;
+      if (key === tab) {
+        b.style.background = "#eff6ff";
+        b.style.borderColor = "#2563eb";
+        b.style.color = "#1d4ed8";
+        b.style.fontWeight = "700";
+      } else {
+        b.style.background = "#ffffff";
+        b.style.borderColor = "#cbd5e1";
+        b.style.color = "#475569";
+        b.style.fontWeight = "normal";
+      }
+    });
+    if (introRefDisplay) {
+      introRefDisplay.textContent = GOLDEN_INTROS[tab] || "";
+    }
+  }
+
+  document.getElementById("btn-intro-tab-zh")?.addEventListener("click", () => setIntroRefTab("zh"));
+  document.getElementById("btn-intro-tab-en1")?.addEventListener("click", () => setIntroRefTab("en1"));
+  document.getElementById("btn-intro-tab-en3")?.addEventListener("click", () => setIntroRefTab("en3"));
+
+  const introRefToggle = document.getElementById("intro-ref-toggle");
+  const introRefBody = document.getElementById("intro-ref-body");
+  const introRefArrow = document.getElementById("intro-ref-arrow");
+  if (introRefToggle && introRefBody) {
+    introRefToggle.addEventListener("click", () => {
+      const isHidden = introRefBody.style.display === "none";
+      introRefBody.style.display = isHidden ? "block" : "none";
+      if (introRefArrow) introRefArrow.textContent = isHidden ? "▲" : "▼";
+      if (isHidden && introRefDisplay && !introRefDisplay.textContent) {
+        setIntroRefTab("zh");
+      }
+    });
+  }
+
+  document.getElementById("btn-use-current-ref")?.addEventListener("click", () => {
+    introTextarea.value = GOLDEN_INTROS[currentIntroRefTab] || "";
+    updateCharCount(introTextarea, "intro-char-count");
+  });
+
+  document.getElementById("btn-tts-intro-ref")?.addEventListener("click", () => {
+    toggleIntroRefAudio(currentIntroRefTab);
   });
 
   introTextarea.addEventListener("input", () => {
@@ -668,6 +754,7 @@ async function startInterview() {
 async function submitIntro() {
   stopRecording();
   stopVoice();
+  stopRefAudio();
 
   const introText = document.getElementById("intro-textarea").value.trim();
   if (introText.length < 5) {
@@ -822,6 +909,8 @@ function stopRefAudio() {
     state.refAudio = null;
   }
   state.isPlayingRefAudio = false;
+
+  // 1. 重置反馈弹窗朗读按钮
   const icon = document.getElementById("tts-modal-ref-icon");
   const label = document.getElementById("tts-modal-ref-label");
   const status = document.getElementById("modal-tts-ref-status");
@@ -834,6 +923,70 @@ function stopRefAudio() {
     btn.style.borderColor = "#93c5fd";
     btn.style.color = "#1d4ed8";
   }
+
+  // 2. 重置自我介绍标答朗读按钮
+  const introIcon = document.getElementById("tts-intro-ref-icon");
+  const introLabel = document.getElementById("tts-intro-ref-label");
+  const introBtn = document.getElementById("btn-tts-intro-ref");
+  if (introIcon) introIcon.textContent = "🔊";
+  if (introLabel) introLabel.textContent = "AI 朗读此标答";
+  if (introBtn) {
+    introBtn.style.background = "#eff6ff";
+    introBtn.style.borderColor = "#93c5fd";
+    introBtn.style.color = "#1d4ed8";
+  }
+}
+
+function toggleIntroRefAudio(tab) {
+  if (state.isPlayingRefAudio) {
+    stopRefAudio();
+    return;
+  }
+
+  stopVoice();
+  stopRefAudio();
+
+  const text = GOLDEN_INTROS[tab] || GOLDEN_INTROS.zh;
+  if (!text) return;
+
+  const icon = document.getElementById("tts-intro-ref-icon");
+  const label = document.getElementById("tts-intro-ref-label");
+  const btn = document.getElementById("btn-tts-intro-ref");
+
+  state.isPlayingRefAudio = true;
+  if (icon) icon.textContent = "⏹️";
+  if (label) label.textContent = "停止朗读";
+  if (btn) {
+    btn.style.background = "#fee2e2";
+    btn.style.borderColor = "#fca5a5";
+    btn.style.color = "#b91c1c";
+  }
+
+  const cleanText = text.substring(0, 500);
+  const audioUrl = `/api/audio/tts?text=${encodeURIComponent(cleanText)}&rate=%2B0%25`;
+  const audio = new Audio(audioUrl);
+  state.refAudio = audio;
+
+  audio.onended = () => {
+    stopRefAudio();
+  };
+
+  audio.onerror = () => {
+    console.warn("自我介绍标答音频加载失败，尝试降级本地合成");
+    stopRefAudio();
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      const isEn = /[a-zA-Z]{5,}/.test(cleanText);
+      utterance.lang = isEn ? "en-US" : "zh-CN";
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  audio.play().catch((err) => {
+    console.warn("音频播放受限:", err);
+    stopRefAudio();
+  });
 }
 
 function toggleModalRefAudio() {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>保研面试模拟系统</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=2.3">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.4">
 </head>
 <body>
 
@@ -159,9 +159,42 @@
         </div>
       </div>
 
-      <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-        <button type="button" id="btn-preset-zh" class="action-btn" style="font-size: 0.75rem;">📝 填入中文介绍示例</button>
-        <button type="button" id="btn-preset-en" class="action-btn" style="font-size: 0.75rem;">📝 填入英文介绍示例</button>
+      <!-- 快捷填入三段式黄金标答 -->
+      <div style="margin-bottom: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+        <button type="button" id="btn-preset-zh" class="action-btn" style="font-size: 0.72rem; padding: 4px 8px; background: #f0fdf4; border-color: #86efac; color: #15803d; font-weight: 600; cursor: pointer;">
+          📝 填入中文标答 (1.5-2分钟精练版)
+        </button>
+        <button type="button" id="btn-preset-en" class="action-btn" style="font-size: 0.72rem; padding: 4px 8px; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; cursor: pointer;">
+          📝 填入英文标答 (1分钟极速版)
+        </button>
+        <button type="button" id="btn-preset-en-deep" class="action-btn" style="font-size: 0.72rem; padding: 4px 8px; background: #faf5ff; border-color: #d8b4fe; color: #7e22ce; font-weight: 600; cursor: pointer;">
+          📝 填入英文深度标答 (3分钟学术版)
+        </button>
+      </div>
+
+      <!-- 自我介绍标准回答抽屉 (可折叠查看与 AI 试听) -->
+      <div class="tips-accordion" style="margin-bottom: 10px;">
+        <div id="intro-ref-toggle" class="tips-header" style="background: #f8fafc; border-color: #cbd5e1; cursor: pointer;">
+          <span style="font-weight: 700; color: #1e3a8a; font-size: 0.78rem;">💡 查看自我介绍标准答案与高分三段式架构</span>
+          <span id="intro-ref-arrow">▼</span>
+        </div>
+        <div id="intro-ref-body" class="tips-content" style="display: none; padding: 10px; font-size: 0.82rem; line-height: 1.6; color: #334155;">
+          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <button type="button" id="btn-intro-tab-zh" class="action-btn active" style="flex: 1; font-weight: 700; font-size: 0.72rem; padding: 4px 2px; background: #eff6ff; border-color: #2563eb; color: #1d4ed8; cursor: pointer;">🇨🇳 中文标答 (1.5-2分钟)</button>
+            <button type="button" id="btn-intro-tab-en1" class="action-btn" style="flex: 1; font-size: 0.72rem; padding: 4px 2px; background: #fff; border-color: #cbd5e1; color: #475569; cursor: pointer;">🇺🇸 英文标答 (1分钟极速)</button>
+            <button type="button" id="btn-intro-tab-en3" class="action-btn" style="flex: 1; font-size: 0.72rem; padding: 4px 2px; background: #fff; border-color: #cbd5e1; color: #475569; cursor: pointer;">🎓 英文标答 (3分钟学术)</button>
+          </div>
+          <div id="intro-ref-text-display" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; white-space: pre-wrap; max-height: 180px; overflow-y: auto; font-size: 0.78rem; line-height: 1.5; color: #334155;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <button type="button" id="btn-tts-intro-ref" class="action-btn" style="font-size: 0.74rem; padding: 3px 10px; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; cursor: pointer;">
+              <span id="tts-intro-ref-icon">🔊</span>
+              <span id="tts-intro-ref-label">AI 朗读此标答</span>
+            </button>
+            <button type="button" id="btn-use-current-ref" class="action-btn" style="font-size: 0.74rem; padding: 3px 10px; background: #ecfdf5; border-color: #a7f3d0; color: #047857; font-weight: 600; cursor: pointer;">
+              ✍️ 填入作答框
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="answer-section">
@@ -382,6 +415,6 @@
 
 </div>
 
-<script src="/static/js/app.js?v=2.3"></script>
+<script src="/static/js/app.js?v=2.4"></script>
 </body>
 </html>
