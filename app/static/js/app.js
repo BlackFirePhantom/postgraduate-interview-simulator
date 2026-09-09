@@ -510,6 +510,17 @@ function setupEventListeners() {
     btnTtsModalRef.addEventListener("click", toggleModalRefAudio);
   }
 
+  // 8.4 弹窗速记版块 AI 朗读
+  const btnTtsModalShort = document.getElementById("btn-tts-modal-short");
+  if (btnTtsModalShort) {
+    btnTtsModalShort.addEventListener("click", () => {
+      const shortText = document.getElementById("modal-shorthand-text")?.textContent?.trim();
+      if (shortText) {
+        playSingleRefAudio(shortText);
+      }
+    });
+  }
+
   // 9. 提交回答
   document.getElementById("btn-submit-answer").addEventListener("click", submitAnswer);
 
@@ -1066,6 +1077,31 @@ function showFeedbackModal(evaluation, question) {
   document.getElementById("modal-feedback-text").textContent = evaluation.feedback;
   document.getElementById("modal-reference-answer").textContent =
     question.reference_answer || "（本题注重个人思路表达与逻辑完整性）";
+
+  // 1. 填充并展示速记版块
+  const shortSec = document.getElementById("modal-shorthand-section");
+  const shortEl = document.getElementById("modal-shorthand-text");
+  if (shortSec && shortEl) {
+    if (question.shorthand) {
+      shortEl.textContent = question.shorthand;
+      shortSec.style.display = "block";
+    } else {
+      shortSec.style.display = "none";
+    }
+  }
+
+  // 2. 填充并展示加分亮点版块
+  const highSec = document.getElementById("modal-highlight-section");
+  const highEl = document.getElementById("modal-highlight-text");
+  if (highSec && highEl) {
+    if (question.highlight) {
+      highEl.textContent = question.highlight;
+      highSec.style.display = "block";
+    } else {
+      highSec.style.display = "none";
+    }
+  }
+
   modalFeedback.style.display = "flex";
 }
 
@@ -1201,6 +1237,16 @@ function renderReportView() {
         </div>
         <div style="white-space: pre-wrap; line-height: 1.5;">${refAnswerEscaped}</div>
       </div>
+      ${rec.question.shorthand ? `
+      <div style="font-size: 0.78rem; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 6px 8px; border-radius: 6px; margin-top: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+          <strong>⚡ 极速速记标答 (考场脱口而出)：</strong>
+          <button type="button" class="ref-tts-btn-small" style="color: #047857; border-color: #a7f3d0; background: #fff;" onclick='playSingleRefAudio(${JSON.stringify(rec.question.shorthand)})'>
+            <span>🔊 读速记</span>
+          </button>
+        </div>
+        <div style="white-space: pre-wrap; line-height: 1.45; font-weight: 500;">${escapeHtml(rec.question.shorthand)}</div>
+      </div>` : ''}
     `;
     reviewList.appendChild(item);
   });

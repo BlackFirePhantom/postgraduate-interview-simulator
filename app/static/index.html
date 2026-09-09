@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>保研面试模拟系统</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=2.5">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.6">
 </head>
 <body>
 
@@ -409,12 +409,35 @@
         </div>
       </div>
 
+      <!-- ⚡ 极速速记标答版块 (3句骨架 · 考场脱口而出心法) -->
+      <div id="modal-shorthand-section" style="margin-bottom: 14px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 0.84rem; font-weight: 700; color: #047857; display: flex; align-items: center; gap: 4px;">
+            <span>⚡ 极速速记标答 (3句骨架 · 考场脱口而出)：</span>
+          </span>
+          <button type="button" id="btn-tts-modal-short" class="action-btn" style="font-size: 0.72rem; padding: 2px 8px; background: #ecfdf5; border-color: #a7f3d0; color: #047857; font-weight: 600; cursor: pointer;">
+            <span>🔊 读速记</span>
+          </button>
+        </div>
+        <div id="modal-shorthand-text" style="font-size: 0.83rem; line-height: 1.55; color: #065f46; background: #f0fdf4; border: 1.5px solid #86efac; padding: 10px 12px; border-radius: 8px; white-space: pre-wrap; font-weight: 500;">
+        </div>
+      </div>
+
+      <!-- 🌟 工程思维与加分亮点版块 -->
+      <div id="modal-highlight-section" style="margin-bottom: 14px; display: none;">
+        <div style="margin-bottom: 4px;">
+          <span style="font-size: 0.80rem; font-weight: 700; color: #b45309;">🌟 工程思维与考场点睛 (加分亮点)：</span>
+        </div>
+        <div id="modal-highlight-text" style="font-size: 0.80rem; line-height: 1.5; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; padding: 8px 10px; border-radius: 8px; white-space: pre-wrap;">
+        </div>
+      </div>
+
       <button id="btn-next-question" class="btn-primary">进入下一题 ➔</button>
     </div>
   </div>
 
 </div>
 
-<script src="/static/js/app.js?v=2.5"></script>
+<script src="/static/js/app.js?v=2.6"></script>
 </body>
 </html>

@@ -15,7 +15,8 @@ def test_api_questions_endpoint():
     response = client.get("/api/questions")
     assert response.status_code == 200
     questions = response.json()
-    assert len(questions) >= 10
+    assert len(questions) >= 200
+    assert all("shorthand" in q and len(q["shorthand"]) > 0 for q in questions)
     categories = {q["category"] for q in questions}
     assert "academic" in categories
     assert "english" in categories
@@ -144,6 +145,7 @@ def test_api_give_up_and_reference_answer_flow():
     assert "0分" in ans_data["evaluation"]["feedback"]
     assert "主动放弃" in ans_data["evaluation"]["feedback"]
     assert len(cur_q["reference_answer"]) > 0
+    assert len(cur_q["shorthand"]) > 0
 
 
 def test_api_tts_with_custom_rate():

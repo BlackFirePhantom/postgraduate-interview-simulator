@@ -35,6 +35,8 @@ class QuestionItem(BaseModel):
     question: str = Field(..., description="题目内容")
     tips: List[str] = Field(default_factory=list, description="答题关键点/要点提示")
     reference_answer: str = Field(default="", description="标准参考回答")
+    shorthand: str = Field(default="", description="极速速记标答/答题骨架/记忆心法")
+    highlight: str = Field(default="", description="工程思维与加分亮点")
     keywords: List[str] = Field(default_factory=list, description="评分与踩分关键词")
 
 
