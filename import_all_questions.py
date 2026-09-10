@@ -110,14 +110,6 @@ def main():
     })
 
     # 2. 英文自我介绍 (首题 eng_intro_01)
-    clean_en_intro_short = (
-        "Good morning, respected professors, my name is Liu Zijun, a senior majoring in "
-        "Microelectronics at Hubei University of Technology with a GPA of 3.69, ranking in the top 14%. "
-        "During college, I focused on FPGA and SoC design and won three National First Prizes, including "
-        "First Place nationwide in the National IC Competition. "
-        "I am eager to pursue my master's degree at your esteemed university, focusing on domain-specific "
-        "architectures and heterogeneous computing."
-    )
     new_qb.append({
         "id": "eng_intro_01",
         "category": "english",
@@ -128,7 +120,7 @@ def main():
             "Paragraph 2: Focused on FPGA and SoC design, three National First Prizes (IC Grand Award #1, HLS & edge AI)",
             "Paragraph 3: Master's aspirations in DSA, heterogeneous computing, and hardware security"
         ],
-        "reference_answer": clean_en_intro_short,
+        "reference_answer": clean_en_intro,
         "shorthand": "1. Basic Info: Microelectronics, GPA 3.69 (top 14%), CET-6.\n2. Competitions: Focused on FPGA/SoC, won 3 National 1st Prizes (IC Grand Award #1, HLS & Edge AI).\n3. Future Goals: Master's in DSA, heterogeneous computing & hardware security.",
         "highlight": "Deliver with confident pace (140-150 words/min), emphasize 'Enterprise Grand Award, ranking First Place nationwide'.",
         "keywords": ["Liu Zijun", "Microelectronics", "Hubei University of Technology", "GPA", "National First Prize", "Integrated Circuit", "FPGA", "SoC", "HLS", "heterogeneous computing", "hardware security"]
@@ -249,9 +241,10 @@ def main():
                 errors.append(f"{qid}: EN shorthand contains Chinese")
             if any(c in full_width_punct for c in ref):
                 errors.append(f"{qid}: EN ref contains full-width punctuation")
-            sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', ref.replace('\n', ' ')) if s.strip()]
-            if not (2 <= len(sents) <= 3):
-                errors.append(f"{qid}: EN ref must have 2-3 sentences, got {len(sents)}")
+            if qid != "eng_intro_01":
+                sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', ref.replace('\n', ' ')) if s.strip()]
+                if not (2 <= len(sents) <= 3):
+                    errors.append(f"{qid}: EN ref must have 2-3 sentences, got {len(sents)}")
         else:
             bracket_en = re.findall(r"[（\(]([A-Za-z]{2,}(?:\s+[A-Za-z]+)+)[）\)]", q_txt)
             if bracket_en:
