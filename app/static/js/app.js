@@ -196,11 +196,7 @@ const GOLDEN_INTROS = {
 
 贵校在集成电路与电子信息领域实力雄厚。若能在此深造，我希望深耕领域专用芯片架构、异构计算与硬件安全，把本科积累的 SoC 与硬件加速实践经验融入导师课题，踏实攻关、多出成果，为芯片自立自强贡献力量。谢谢各位老师！`,
 
-  en1: `Good morning, respected professors! My name is Liu Zijun, a senior undergraduate student majoring in Microelectronics Science and Engineering at Hubei University of Technology. Over the past three years, I have maintained a solid academic foundation with a GPA of 3.69 out of 5.0, ranking in the top 14% of my major, and passed CET-6 with fluent English technical literature reading and communication capabilities.
-
-During college, I focused on FPGA and SoC design. As a core member, I won three National First Prizes. In the National Integrated Circuit Competition, our team built an FPGA hardware accelerator and won the Grand Award, ranking First Place nationwide. In addition, I developed HLS modules and edge AI systems, winning two more National First Prizes in embedded and robotics competitions. These projects gave me strong hands-on engineering skills.
-
-Driven by these experiences, I am eager to pursue my master's degree at your esteemed university, focusing on domain-specific architectures, heterogeneous computing, and hardware security. I am fully prepared to dedicate my engineering skills and academic passion to cutting-edge research and make meaningful contributions to the semiconductor industry. Thank you very much for your time and consideration!`,
+  en1: `Good morning, respected professors, my name is Liu Zijun, a senior majoring in Microelectronics at Hubei University of Technology with a GPA of 3.69, ranking in the top 14%. During college, I focused on FPGA and SoC design and won three National First Prizes, including First Place nationwide in the National IC Competition. I am eager to pursue my master's degree at your esteemed university, focusing on domain-specific architectures and heterogeneous computing.`,
 
   en3: `Good morning, respected professors! Thank you very much for giving me this valuable opportunity. My name is Liu Zijun, a senior undergraduate majoring in Microelectronics Science and Engineering at the School of Chip Industry, Hubei University of Technology. Over the past three years, I have pursued academic excellence with great dedication, achieving a cumulative GPA of 3.69 out of 5.0 and ranking 17th out of 123 students, placing me in the top 14% of my major. I have established a robust microelectronics knowledge foundation, earning top scores in core courses such as 97 in CMOS Integrated Circuit Design, 98 in IC Design Practice, and 95 in Semiconductor Physics. In addition, I have passed CET-4 and CET-6, equipping me with fluent English technical literature reading and academic communication capabilities. Beyond coursework, my participation in the research project on pulsed laser micro-nano structuring and SEM characterization has instilled in me a rigorous scientific attitude and a deep respect for micro-physical laws.
 
@@ -741,7 +737,7 @@ function playInterviewerVoice(text, avatarEl, statusEl) {
       const utterance = new SpeechSynthesisUtterance(text);
       const isEn = /[a-zA-Z]{5,}/.test(text);
       utterance.lang = isEn ? "en-US" : "zh-CN";
-      utterance.rate = 1.35; // 浏览器本地引擎同样极大加快语速
+      utterance.rate = isEn ? 1.1 : 1.35; // 浏览器本地引擎: 英文快10%, 中文快35%
       utterance.onend = onPlaybackDone;
       utterance.onerror = onPlaybackDone;
       window.speechSynthesis.speak(utterance);
@@ -1725,7 +1721,8 @@ function toggleMemorizeTTS(type) {
 
   if (type === "question") {
     rawText = q.question;
-    rateParam = "%2B25%25"; // 考官提问紧凑音速
+    const isEn = q.category === "english" || /[a-zA-Z]{5,}/.test(rawText);
+    rateParam = isEn ? "%2B10%25" : "%2B25%25"; // 英文考官提问比正常快10%，中文紧凑发问
   } else if (type === "ref") {
     rawText = q.reference_answer || "";
     rateParam = "%2B0%25";  // 标答标准速度，跟读纠音
@@ -1773,7 +1770,7 @@ function toggleMemorizeTTS(type) {
       const utterance = new SpeechSynthesisUtterance(cleanText);
       const isEn = /[a-zA-Z]{5,}/.test(cleanText);
       utterance.lang = isEn ? "en-US" : "zh-CN";
-      utterance.rate = 1.0;
+      utterance.rate = (type === "question" && isEn) ? 1.1 : ((type === "question") ? 1.25 : 1.0);
       window.speechSynthesis.speak(utterance);
     }
   };

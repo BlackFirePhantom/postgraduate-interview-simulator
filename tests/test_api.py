@@ -156,6 +156,14 @@ def test_api_tts_with_custom_rate():
     assert len(res.content) > 100
 
 
+def test_tts_service_english_rate_is_plus_10_percent():
+    """验证英文考官默认发音语速配置为 +10%（比正常快10%，自然舒适）"""
+    from app.core.tts_service import RATE_EN, choose_voice_params
+    assert RATE_EN == "+10%"
+    _, rate, _ = choose_voice_params("Could you please give us a brief self-introduction within one minute?")
+    assert rate == "+10%"
+
+
 def test_api_questions_by_category_for_memorize():
     """验证背记模式所需的全部 218 题及分类、子领域、标答、速记的完整可用性"""
     for cat, min_count in [("academic", 120), ("english", 70), ("general", 18)]:

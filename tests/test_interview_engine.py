@@ -171,6 +171,9 @@ def test_question_bank_language_purity():
             assert not any(c in full_width_punct for c in q["question"]), f"EN Q contains full-width punct: {q['id']}"
             assert not zh_pattern.search(q["reference_answer"]), f"EN Ref contains Chinese: {q['id']}"
             assert not any(c in full_width_punct for c in q["reference_answer"]), f"EN Ref contains full-width punct: {q['id']}"
+            # 英语标答必须精炼，严格控制在 2 至 3 句话
+            sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', q["reference_answer"].replace('\n', ' ')) if s.strip()]
+            assert 2 <= len(sents) <= 3, f"EN Ref must have 2-3 sentences: {q['id']} has {len(sents)}"
         else:
             # 中文题目与标答不得包含英文括号夹杂，如（Fermi Level）或（Setup Time）
             bracket_en = re.findall(r"[（\(]([A-Za-z]{2,}(?:\s+[A-Za-z]+)+)[）\)]", q["question"])
