@@ -58,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
   setupSpeechRecognition();
   updateProgress(0, "等待开始");
+  setTimeout(preloadQuestionBank, 300); // 后台静默预加载题库，背记模式 0 延迟秒开
 });
 
 function switchView(viewName) {
@@ -1422,6 +1423,28 @@ function escapeHtml(text) {
 window.playSingleRefAudio = playSingleRefAudio;
 
 // ---------------- 专门背记与刷题模式核心引擎 ----------------
+// 后台静默预加载题库数据，使背记模式 0 延迟秒开
+async function preloadQuestionBank() {
+  if (state.memorize.allQuestions && state.memorize.allQuestions.length > 0) return;
+  try {
+    const cached = sessionStorage.getItem("cached_question_bank_v2");
+    if (cached) {
+      state.memorize.allQuestions = JSON.parse(cached);
+      return;
+    }
+    const res = await fetch("/api/questions");
+    if (res.ok) {
+      const list = await res.json();
+      state.memorize.allQuestions = list;
+      try {
+        sessionStorage.setItem("cached_question_bank_v2", JSON.stringify(list));
+      } catch (_) {}
+    }
+  } catch (e) {
+    // 静默预加载失败不中断主流程
+  }
+}
+
 async function enterMemorizeMode() {
   // 1. 停止考场相关一切计时器与正在播放的语音
   stopVoice();
@@ -1444,15 +1467,27 @@ async function enterMemorizeMode() {
   switchView("memorize");
   updateProgress(100, "📖 自由背记模式");
 
-  // 4. 如果尚未拉取题库数据，则调用 /api/questions 加载
+  // 4. 如果尚未拉取题库数据，优先从 sessionStorage 读取或调用 /api/questions 加载
+  if (!state.memorize.allQuestions || state.memorize.allQuestions.length === 0) {
+    try {
+      const cached = sessionStorage.getItem("cached_question_bank_v2");
+      if (cached) {
+        state.memorize.allQuestions = JSON.parse(cached);
+      }
+    } catch (_) {}
+  }
+
   if (!state.memorize.allQuestions || state.memorize.allQuestions.length === 0) {
     const qTextEl = document.getElementById("mem-q-text");
-    if (qTextEl) qTextEl.textContent = "正在调取全库 218 道真题与权威标答...";
+    if (qTextEl) qTextEl.textContent = "正在调取全库 218 道真题与权威标答 (首次加载约需数秒，后续秒开)...";
     try {
       const res = await fetch("/api/questions");
       if (!res.ok) throw new Error("获取题库失败");
       const list = await res.json();
       state.memorize.allQuestions = list;
+      try {
+        sessionStorage.setItem("cached_question_bank_v2", JSON.stringify(list));
+      } catch (_) {}
     } catch (err) {
       alert("加载题库失败: " + err.message);
       exitMemorizeMode();

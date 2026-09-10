@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
@@ -46,6 +47,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 启用 GZip 压缩（题目库 JSON 达 470KB，启用 GZip 后大幅压缩至 170KB，跨公网极速传输）
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # 静态资源与页面路径
 STATIC_DIR = Path(__file__).resolve().parent / "static"
