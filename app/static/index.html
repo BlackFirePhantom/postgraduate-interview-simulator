@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>保研面试模拟系统</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=2.6">
+  <link rel="stylesheet" href="/static/css/style.css?v=2.7">
 </head>
 <body>
 
@@ -15,9 +15,12 @@
       <span>🎓</span>
       <span>保研面试模拟</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 6px;">
       <button type="button" id="btn-toggle-voice" class="action-btn" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 14px; background: #eff6ff; border-color: #93c5fd; color: #1e40af;">
         🔊 考官原声: 开
+      </button>
+      <button type="button" id="btn-header-memorize" class="action-btn" style="padding: 3px 8px; font-size: 0.72rem; border-radius: 14px; background: #ecfdf5; border-color: #a7f3d0; color: #047857; font-weight: 600; cursor: pointer;">
+        📖 背记模式
       </button>
       <div id="stage-badge" class="stage-badge">准备中</div>
     </div>
@@ -82,6 +85,15 @@
           <button type="button" class="action-btn mode-btn" data-mode="specialized" style="width: 100%; border-color: #cbd5e1; background: #ffffff; color: #475569; padding: 8px 12px; text-align: left;">
             🎯 单项专项强化特训 (针对性复习 · 自选题数)<br>
             <span style="font-size: 0.72rem; color: #94a3b8;">单选专业课 / 英语日常 / 综合素质 · 自定义抽题量 · 免自我介绍直奔主题</span>
+          </button>
+
+          <!-- 模式 4: 专门背记刷题模式 (NEW) -->
+          <button type="button" id="btn-enter-memorize" class="action-btn" style="width: 100%; border-color: #10b981; background: #ecfdf5; color: #065f46; font-weight: 700; padding: 10px 12px; text-align: left; border-radius: 10px; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>📖 专门背记刷题模式 (直看标答 · 免流程)</span>
+              <span style="font-size: 0.7rem; background: #059669; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 600;">考前必刷</span>
+            </div>
+            <span style="font-size: 0.73rem; font-weight: normal; color: #047857; display: block; margin-top: 3px;">全库 218 题 · 权威标答与3句速记直看 · 保留AI朗读跟读纠音 · 无倒计时无压力</span>
           </button>
         </div>
 
@@ -373,6 +385,162 @@
       <button id="btn-restart" class="btn-primary" style="margin: 12px 0 24px 0;">开启下一轮模拟面试</button>
     </div>
 
+    <!-- 5. 专门背记与自由刷题模式界面 -->
+    <div id="view-memorize" style="display: none; flex-direction: column; height: 100%;">
+      <!-- 顶部控制条：返回主页、进度指示、遮挡切换 -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+        <button type="button" id="btn-mem-back" class="action-btn" style="font-size: 0.76rem; padding: 4px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; border-color: #cbd5e1; cursor: pointer;">
+          🏠 返回主页
+        </button>
+        <div style="font-size: 0.82rem; font-weight: 700; color: #1e3a8a;">
+          <span id="mem-progress-label">第 1 / 218 题</span>
+        </div>
+        <button type="button" id="btn-mem-toggle-answer" class="action-btn" style="font-size: 0.74rem; padding: 4px 8px; border-radius: 6px; background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; font-weight: 600; cursor: pointer;">
+          👁️ 遮挡标答 (自测)
+        </button>
+      </div>
+
+      <!-- 一级分类筛选胶囊标签 -->
+      <div class="mem-cat-bar" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px;">
+        <button type="button" class="mem-cat-chip active" data-cat="all">全部 (218)</button>
+        <button type="button" class="mem-cat-chip" data-cat="academic">💻 专业课 (120)</button>
+        <button type="button" class="mem-cat-chip" data-cat="english">🗣️ 英语 (79)</button>
+        <button type="button" class="mem-cat-chip" data-cat="general">🧠 综合 (19)</button>
+      </div>
+
+      <!-- 二级学科子领域联动筛选器 -->
+      <div id="mem-subcat-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: #f8fafc; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <span style="font-size: 0.76rem; color: #64748b; font-weight: 600; white-space: nowrap;">学科子领域：</span>
+        <select id="mem-subcat-select" style="font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; max-width: 230px; outline: none;">
+          <option value="all">全学科知识点 (全部)</option>
+        </select>
+      </div>
+
+      <!-- 题目背记核心卡片 -->
+      <div id="mem-card" class="mem-card" style="flex: 1; overflow-y: auto; padding-bottom: 60px;">
+        <!-- 题头：分类标签、子领域与编号 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <span id="mem-badge-cat" class="badge-tag badge-academic">专业问题</span>
+            <span id="mem-badge-subcat" class="badge-sub" style="margin-left: 6px;">操作系统</span>
+          </div>
+          <span id="mem-q-id" style="font-size: 0.72rem; color: #94a3b8; font-family: monospace;">Q1</span>
+        </div>
+
+        <!-- 题目气泡 + 读题按钮 -->
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-left: 4px solid #2563eb; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            <div id="mem-q-text" style="font-size: 0.95rem; font-weight: 700; color: #0f172a; line-height: 1.5; flex: 1;">
+              加载题目中...
+            </div>
+            <button type="button" id="btn-mem-tts-question" class="action-btn" style="font-size: 0.74rem; padding: 4px 8px; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+              <span id="mem-tts-q-icon">🔊</span>
+              <span id="mem-tts-q-text">读题</span>
+            </button>
+          </div>
+          <div id="mem-tts-q-status" style="display: none; font-size: 0.72rem; color: #2563eb; margin-top: 6px; align-items: center; gap: 4px;">
+            <span>考官严肃朗读题目中...</span>
+            <span class="voice-wave-container">
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+              <span class="wave-bar"></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- 答题要点提示 (可折叠) -->
+        <div id="mem-tips-wrap" class="tips-accordion" style="margin-bottom: 12px;">
+          <div id="mem-tips-toggle" class="tips-header" style="background: #f8fafc; cursor: pointer;">
+            <span style="font-size: 0.78rem; font-weight: 600; color: #1e3a8a;">💡 答题思考关键点 (点击展开/折叠)</span>
+            <span id="mem-tips-arrow">▼</span>
+          </div>
+          <div id="mem-tips-body" class="tips-content" style="display: none;">
+            <ul id="mem-tips-list" style="margin: 0; padding-left: 18px; font-size: 0.8rem; line-height: 1.5; color: #475569;"></ul>
+          </div>
+        </div>
+
+        <!-- 标答区域容器（支持自测时一键遮挡） -->
+        <div id="mem-answers-container">
+          <!-- 1. 权威标准参考回答 -->
+          <div style="background: #ffffff; border: 1.5px solid #93c5fd; border-radius: 10px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(37,99,235,0.06);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <strong style="font-size: 0.86rem; color: #1e40af; display: flex; align-items: center; gap: 4px;">
+                <span>🎯</span> 权威标答 (口语化示范)
+              </strong>
+              <button type="button" id="btn-mem-tts-ref" class="action-btn" style="font-size: 0.74rem; padding: 3px 8px; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+                <span id="mem-tts-ref-icon">🔊</span>
+                <span id="mem-tts-ref-text">读标答 · 纠音跟读</span>
+              </button>
+            </div>
+            <div id="mem-ref-answer" style="font-size: 0.84rem; line-height: 1.6; color: #1e293b; white-space: pre-wrap; word-break: break-word;"></div>
+            <div id="mem-tts-ref-status" style="display: none; font-size: 0.72rem; color: #2563eb; margin-top: 6px; align-items: center; gap: 4px;">
+              <span>AI 朗读标答中 (标准原速，适合跟读纠音)...</span>
+              <span class="voice-wave-container">
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+              </span>
+            </div>
+          </div>
+
+          <!-- 2. 极速速记心法与3句骨架 -->
+          <div id="mem-shorthand-card" style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="font-size: 0.85rem; color: #047857; display: flex; align-items: center; gap: 4px;">
+                <span>⚡</span> 极速速记标答 (3句骨架 · 考场脱口而出)
+              </strong>
+              <button type="button" id="btn-mem-tts-short" class="action-btn" style="font-size: 0.72rem; padding: 3px 8px; background: #ffffff; border-color: #86efac; color: #047857; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+                <span id="mem-tts-short-icon">🔊</span>
+                <span id="mem-tts-short-text">读速记</span>
+              </button>
+            </div>
+            <div id="mem-shorthand-text" style="font-size: 0.83rem; line-height: 1.55; color: #065f46; white-space: pre-wrap; font-weight: 500;"></div>
+            <div id="mem-tts-short-status" style="display: none; font-size: 0.72rem; color: #059669; margin-top: 6px; align-items: center; gap: 4px;">
+              <span>AI 朗读速记中...</span>
+              <span class="voice-wave-container">
+                <span class="wave-bar" style="background: #10b981;"></span>
+                <span class="wave-bar" style="background: #10b981;"></span>
+                <span class="wave-bar" style="background: #10b981;"></span>
+              </span>
+            </div>
+          </div>
+
+          <!-- 3. 工程思维与考场点睛 -->
+          <div id="mem-highlight-card" style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; display: none;">
+            <strong style="font-size: 0.82rem; color: #b45309; display: block; margin-bottom: 4px;">
+              🌟 工程思维与加分点睛：
+            </strong>
+            <div id="mem-highlight-text" style="font-size: 0.80rem; line-height: 1.5; color: #92400e; white-space: pre-wrap;"></div>
+          </div>
+        </div>
+
+        <!-- 标答遮挡占位（当考生开启“自测遮挡”时显示） -->
+        <div id="mem-answer-hidden-hint" style="display: none; text-align: center; padding: 24px 16px; background: #f1f5f9; border: 2px dashed #94a3b8; border-radius: 10px; margin-bottom: 12px; cursor: pointer;">
+          <div style="font-size: 1.5rem; margin-bottom: 4px;">🙈</div>
+          <div style="font-size: 0.88rem; font-weight: 700; color: #334155; margin-bottom: 4px;">标答与速记已遮挡 (自我检验模式)</div>
+          <div style="font-size: 0.75rem; color: #64748b;">请先在脑海中回忆答案骨架，然后<strong style="color: #2563eb; text-decoration: underline;">点击此处显示标答</strong></div>
+        </div>
+
+      </div>
+
+      <!-- 底部吸底刷题工具栏 -->
+      <div class="mem-bottom-toolbar">
+        <button type="button" id="btn-mem-prev" class="mem-nav-btn" style="flex: 1.2;">
+          ⬅ 上一题
+        </button>
+        <button type="button" id="btn-mem-random" class="mem-nav-btn" style="flex: 1; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8;">
+          🔀 随机
+        </button>
+        <button type="button" id="btn-mem-next" class="mem-nav-btn" style="flex: 1.2; background: linear-gradient(135deg, #2563eb, #3b82f6); color: #ffffff; border: none; font-weight: 700;">
+          下一题 ➔
+        </button>
+        <div style="display: flex; align-items: center; gap: 2px; padding: 0 2px;">
+          <input type="number" id="mem-jump-input" min="1" max="218" placeholder="题号" style="width: 44px; padding: 6px 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
+          <button type="button" id="btn-mem-jump" class="action-btn" style="padding: 6px 6px; font-size: 0.74rem;">Go</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- 5. 逐题作答反馈 Bottom Sheet 弹窗 -->
@@ -438,6 +606,6 @@
 
 </div>
 
-<script src="/static/js/app.js?v=2.6"></script>
+<script src="/static/js/app.js?v=2.7"></script>
 </body>
 </html>

@@ -25,6 +25,16 @@ const state = {
   isQuestionBlurred: true, // 听力盲测：题目默认虚化
   refAudio: null,          // 标答语音播放器 Audio 实例
   isPlayingRefAudio: false,
+  memorize: {
+    allQuestions: [],
+    filteredQuestions: [],
+    currentIndex: 0,
+    currentCategory: "all",
+    currentSubcat: "all",
+    hideAnswer: false,
+    audioInstance: null,
+    activeAudioType: null, // "question" | "ref" | "short"
+  },
 };
 
 // DOM 元素引用
@@ -33,6 +43,7 @@ const views = {
   intro: document.getElementById("view-intro"),
   question: document.getElementById("view-question"),
   report: document.getElementById("view-report"),
+  memorize: document.getElementById("view-memorize"),
 };
 
 const stageBadge = document.getElementById("stage-badge");
@@ -545,6 +556,130 @@ function setupEventListeners() {
     examTimerBar.style.display = "none";
     switchView("welcome");
     updateProgress(0, "准备中");
+  });
+
+  // 12. 专门背记模式交互绑定
+  const btnHeaderMemorize = document.getElementById("btn-header-memorize");
+  if (btnHeaderMemorize) {
+    btnHeaderMemorize.addEventListener("click", () => {
+      if (views.memorize && views.memorize.style.display === "flex") {
+        exitMemorizeMode();
+      } else {
+        enterMemorizeMode();
+      }
+    });
+  }
+
+  const btnEnterMemorize = document.getElementById("btn-enter-memorize");
+  if (btnEnterMemorize) {
+    btnEnterMemorize.addEventListener("click", enterMemorizeMode);
+  }
+
+  const btnMemBack = document.getElementById("btn-mem-back");
+  if (btnMemBack) {
+    btnMemBack.addEventListener("click", exitMemorizeMode);
+  }
+
+  const btnMemToggleAnswer = document.getElementById("btn-mem-toggle-answer");
+  if (btnMemToggleAnswer) {
+    btnMemToggleAnswer.addEventListener("click", toggleMemorizeAnswer);
+  }
+
+  const memAnswerHiddenHint = document.getElementById("mem-answer-hidden-hint");
+  if (memAnswerHiddenHint) {
+    memAnswerHiddenHint.addEventListener("click", toggleMemorizeAnswer);
+  }
+
+  const memTipsToggle = document.getElementById("mem-tips-toggle");
+  if (memTipsToggle) {
+    memTipsToggle.addEventListener("click", () => {
+      const body = document.getElementById("mem-tips-body");
+      const arrow = document.getElementById("mem-tips-arrow");
+      if (body && arrow) {
+        const isHidden = body.style.display === "none";
+        body.style.display = isHidden ? "block" : "none";
+        arrow.textContent = isHidden ? "▲" : "▼";
+      }
+    });
+  }
+
+  // 背记一级分类胶囊切换
+  document.querySelectorAll(".mem-cat-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      document.querySelectorAll(".mem-cat-chip").forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      state.memorize.currentCategory = chip.getAttribute("data-cat");
+      state.memorize.currentIndex = 0;
+      updateMemorizeSubcategories();
+      filterMemorizeQuestions();
+      renderMemorizeCard();
+    });
+  });
+
+  // 背记二级子领域下拉联动
+  const subSelect = document.getElementById("mem-subcat-select");
+  if (subSelect) {
+    subSelect.addEventListener("change", (e) => {
+      state.memorize.currentSubcat = e.target.value;
+      state.memorize.currentIndex = 0;
+      filterMemorizeQuestions();
+      renderMemorizeCard();
+    });
+  }
+
+  // 上一题 / 下一题 / 随机抽题
+  const btnMemPrev = document.getElementById("btn-mem-prev");
+  if (btnMemPrev) btnMemPrev.addEventListener("click", memorizePrev);
+
+  const btnMemNext = document.getElementById("btn-mem-next");
+  if (btnMemNext) btnMemNext.addEventListener("click", memorizeNext);
+
+  const btnMemRandom = document.getElementById("btn-mem-random");
+  if (btnMemRandom) btnMemRandom.addEventListener("click", memorizeRandom);
+
+  const btnMemJump = document.getElementById("btn-mem-jump");
+  if (btnMemJump) btnMemJump.addEventListener("click", jumpToMemorizeIndex);
+
+  const memJumpInput = document.getElementById("mem-jump-input");
+  if (memJumpInput) {
+    memJumpInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        jumpToMemorizeIndex();
+      }
+    });
+  }
+
+  // 独立 AI 语音朗读按钮
+  const btnMemTtsQ = document.getElementById("btn-mem-tts-question");
+  if (btnMemTtsQ) {
+    btnMemTtsQ.addEventListener("click", () => toggleMemorizeTTS("question"));
+  }
+
+  const btnMemTtsRef = document.getElementById("btn-mem-tts-ref");
+  if (btnMemTtsRef) {
+    btnMemTtsRef.addEventListener("click", () => toggleMemorizeTTS("ref"));
+  }
+
+  const btnMemTtsShort = document.getElementById("btn-mem-tts-short");
+  if (btnMemTtsShort) {
+    btnMemTtsShort.addEventListener("click", () => toggleMemorizeTTS("short"));
+  }
+
+  // 键盘快捷键 (左右箭头切题，空格键随机抽题)
+  document.addEventListener("keydown", (e) => {
+    if (!views.memorize || views.memorize.style.display !== "flex") return;
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      memorizePrev();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      memorizeNext();
+    } else if (e.key === " ") {
+      e.preventDefault();
+      memorizeRandom();
+    }
   });
 }
 
@@ -1285,3 +1420,367 @@ function escapeHtml(text) {
 }
 
 window.playSingleRefAudio = playSingleRefAudio;
+
+// ---------------- 专门背记与刷题模式核心引擎 ----------------
+async function enterMemorizeMode() {
+  // 1. 停止考场相关一切计时器与正在播放的语音
+  stopVoice();
+  stopRefAudio();
+  stopExamTimer();
+  stopResponseDeadline();
+  stopRecording();
+  if (examTimerBar) examTimerBar.style.display = "none";
+
+  // 2. 更新顶部导航按钮状态
+  const btnHeaderMem = document.getElementById("btn-header-memorize");
+  if (btnHeaderMem) {
+    btnHeaderMem.textContent = "🎓 退出背记";
+    btnHeaderMem.style.background = "#fee2e2";
+    btnHeaderMem.style.borderColor = "#fca5a5";
+    btnHeaderMem.style.color = "#b91c1c";
+  }
+
+  // 3. 切换到背记视图
+  switchView("memorize");
+  updateProgress(100, "📖 自由背记模式");
+
+  // 4. 如果尚未拉取题库数据，则调用 /api/questions 加载
+  if (!state.memorize.allQuestions || state.memorize.allQuestions.length === 0) {
+    const qTextEl = document.getElementById("mem-q-text");
+    if (qTextEl) qTextEl.textContent = "正在调取全库 218 道真题与权威标答...";
+    try {
+      const res = await fetch("/api/questions");
+      if (!res.ok) throw new Error("获取题库失败");
+      const list = await res.json();
+      state.memorize.allQuestions = list;
+    } catch (err) {
+      alert("加载题库失败: " + err.message);
+      exitMemorizeMode();
+      return;
+    }
+  }
+
+  // 5. 初始化二级学科选项与题目筛选并渲染
+  updateMemorizeSubcategories();
+  filterMemorizeQuestions();
+  renderMemorizeCard();
+}
+
+function exitMemorizeMode() {
+  stopMemorizeAudio();
+  const btnHeaderMem = document.getElementById("btn-header-memorize");
+  if (btnHeaderMem) {
+    btnHeaderMem.textContent = "📖 背记模式";
+    btnHeaderMem.style.background = "#ecfdf5";
+    btnHeaderMem.style.borderColor = "#a7f3d0";
+    btnHeaderMem.style.color = "#047857";
+  }
+  switchView("welcome");
+  updateProgress(0, "等待开始");
+}
+
+function updateMemorizeSubcategories() {
+  const cat = state.memorize.currentCategory;
+  const select = document.getElementById("mem-subcat-select");
+  if (!select) return;
+
+  // 收集当前主分类下的所有二级学科/子领域
+  const subcats = new Set();
+  state.memorize.allQuestions.forEach((q) => {
+    if (cat === "all" || q.category === cat) {
+      if (q.subcategory) subcats.add(q.subcategory);
+    }
+  });
+
+  select.innerHTML = '<option value="all">全学科知识点 (全部)</option>';
+  Array.from(subcats).forEach((sub) => {
+    const opt = document.createElement("option");
+    opt.value = sub;
+    opt.textContent = sub;
+    select.appendChild(opt);
+  });
+
+  state.memorize.currentSubcat = "all";
+  select.value = "all";
+}
+
+function filterMemorizeQuestions() {
+  const cat = state.memorize.currentCategory;
+  const sub = state.memorize.currentSubcat;
+
+  state.memorize.filteredQuestions = state.memorize.allQuestions.filter((q) => {
+    const matchCat = cat === "all" || q.category === cat;
+    const matchSub = sub === "all" || q.subcategory === sub;
+    return matchCat && matchSub;
+  });
+
+  if (state.memorize.currentIndex >= state.memorize.filteredQuestions.length) {
+    state.memorize.currentIndex = 0;
+  }
+}
+
+function renderMemorizeCard() {
+  stopMemorizeAudio();
+  const list = state.memorize.filteredQuestions;
+  const total = list.length;
+  if (total === 0) {
+    document.getElementById("mem-q-text").textContent = "当前分类下暂无题目";
+    document.getElementById("mem-ref-answer").textContent = "";
+    document.getElementById("mem-shorthand-text").textContent = "";
+    document.getElementById("mem-progress-label").textContent = "0 / 0 题";
+    return;
+  }
+
+  const idx = state.memorize.currentIndex;
+  const q = list[idx];
+
+  // 1. 进度指示与题号
+  document.getElementById("mem-progress-label").textContent = `第 ${idx + 1} / ${total} 题`;
+  document.getElementById("mem-q-id").textContent = (q.id || "").toUpperCase();
+
+  // 2. 分类徽标与子领域
+  const catBadge = document.getElementById("mem-badge-cat");
+  catBadge.className = "badge-tag " + getCategoryClass(q.category);
+  catBadge.textContent = getCategoryName(q.category);
+  document.getElementById("mem-badge-subcat").textContent = q.subcategory || "考点";
+
+  // 3. 题目内容
+  document.getElementById("mem-q-text").textContent = q.question;
+
+  // 4. 思考提示
+  const tipsList = document.getElementById("mem-tips-list");
+  tipsList.innerHTML = "";
+  if (q.tips && q.tips.length > 0) {
+    q.tips.forEach((tip) => {
+      const li = document.createElement("li");
+      li.textContent = tip;
+      tipsList.appendChild(li);
+    });
+    document.getElementById("mem-tips-wrap").style.display = "block";
+  } else {
+    document.getElementById("mem-tips-wrap").style.display = "none";
+  }
+  document.getElementById("mem-tips-body").style.display = "none";
+  document.getElementById("mem-tips-arrow").textContent = "▼";
+
+  // 5. 权威标答
+  document.getElementById("mem-ref-answer").textContent =
+    q.reference_answer || "（注重逻辑自洽与个人工程实践表达）";
+
+  // 6. 极速速记标答
+  const shortCard = document.getElementById("mem-shorthand-card");
+  const shortText = document.getElementById("mem-shorthand-text");
+  if (q.shorthand) {
+    shortText.textContent = q.shorthand;
+    shortCard.style.display = "block";
+  } else {
+    shortCard.style.display = "none";
+  }
+
+  // 7. 工程思维加分亮点
+  const highCard = document.getElementById("mem-highlight-card");
+  const highText = document.getElementById("mem-highlight-text");
+  if (q.highlight) {
+    highText.textContent = q.highlight;
+    highCard.style.display = "block";
+  } else {
+    highCard.style.display = "none";
+  }
+
+  // 8. 标答遮挡/展示状态应用
+  applyMemorizeAnswerVisibility();
+
+  // 9. 输入跳转框同步显示
+  const jumpInput = document.getElementById("mem-jump-input");
+  if (jumpInput) {
+    jumpInput.value = idx + 1;
+    jumpInput.max = total;
+  }
+
+  // 10. 卡片自动滚回顶部
+  const cardContainer = document.getElementById("mem-card");
+  if (cardContainer) cardContainer.scrollTop = 0;
+}
+
+function applyMemorizeAnswerVisibility() {
+  const ansContainer = document.getElementById("mem-answers-container");
+  const hintEl = document.getElementById("mem-answer-hidden-hint");
+  const btnToggle = document.getElementById("btn-mem-toggle-answer");
+
+  if (state.memorize.hideAnswer) {
+    if (ansContainer) ansContainer.style.display = "none";
+    if (hintEl) hintEl.style.display = "block";
+    if (btnToggle) {
+      btnToggle.textContent = "👁️ 显示标答 (背诵)";
+      btnToggle.style.background = "#fef2f2";
+      btnToggle.style.borderColor = "#fca5a5";
+      btnToggle.style.color = "#b91c1c";
+    }
+  } else {
+    if (ansContainer) ansContainer.style.display = "block";
+    if (hintEl) hintEl.style.display = "none";
+    if (btnToggle) {
+      btnToggle.textContent = "👁️ 遮挡标答 (自测)";
+      btnToggle.style.background = "#eff6ff";
+      btnToggle.style.borderColor = "#93c5fd";
+      btnToggle.style.color = "#1d4ed8";
+    }
+  }
+}
+
+function toggleMemorizeAnswer() {
+  state.memorize.hideAnswer = !state.memorize.hideAnswer;
+  applyMemorizeAnswerVisibility();
+}
+
+function memorizeNext() {
+  const total = state.memorize.filteredQuestions.length;
+  if (total === 0) return;
+  state.memorize.currentIndex = (state.memorize.currentIndex + 1) % total;
+  renderMemorizeCard();
+}
+
+function memorizePrev() {
+  const total = state.memorize.filteredQuestions.length;
+  if (total === 0) return;
+  state.memorize.currentIndex = (state.memorize.currentIndex - 1 + total) % total;
+  renderMemorizeCard();
+}
+
+function memorizeRandom() {
+  const total = state.memorize.filteredQuestions.length;
+  if (total <= 1) return;
+  let nextIdx = Math.floor(Math.random() * total);
+  if (nextIdx === state.memorize.currentIndex) {
+    nextIdx = (nextIdx + 1) % total;
+  }
+  state.memorize.currentIndex = nextIdx;
+  renderMemorizeCard();
+}
+
+function jumpToMemorizeIndex() {
+  const input = document.getElementById("mem-jump-input");
+  if (!input) return;
+  const val = parseInt(input.value, 10);
+  const total = state.memorize.filteredQuestions.length;
+  if (isNaN(val) || val < 1 || val > total) {
+    alert(`请输入 1 到 ${total} 之间的有效题号`);
+    return;
+  }
+  state.memorize.currentIndex = val - 1;
+  renderMemorizeCard();
+}
+
+function stopMemorizeAudio() {
+  if (state.memorize.audioInstance) {
+    state.memorize.audioInstance.pause();
+    state.memorize.audioInstance = null;
+  }
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+
+  // 复位各个按钮文案和声波动画
+  const qBtnText = document.getElementById("mem-tts-q-text");
+  const qIcon = document.getElementById("mem-tts-q-icon");
+  const qStatus = document.getElementById("mem-tts-q-status");
+  if (qBtnText) qBtnText.textContent = "读题";
+  if (qIcon) qIcon.textContent = "🔊";
+  if (qStatus) qStatus.style.display = "none";
+
+  const refBtnText = document.getElementById("mem-tts-ref-text");
+  const refIcon = document.getElementById("mem-tts-ref-icon");
+  const refStatus = document.getElementById("mem-tts-ref-status");
+  if (refBtnText) refBtnText.textContent = "读标答 · 纠音跟读";
+  if (refIcon) refIcon.textContent = "🔊";
+  if (refStatus) refStatus.style.display = "none";
+
+  const shortBtnText = document.getElementById("mem-tts-short-text");
+  const shortIcon = document.getElementById("mem-tts-short-icon");
+  const shortStatus = document.getElementById("mem-tts-short-status");
+  if (shortBtnText) shortBtnText.textContent = "读速记";
+  if (shortIcon) shortIcon.textContent = "🔊";
+  if (shortStatus) shortStatus.style.display = "none";
+
+  state.memorize.activeAudioType = null;
+}
+
+function toggleMemorizeTTS(type) {
+  if (state.memorize.activeAudioType === type) {
+    // 正在播放当前音频，点击则停止
+    stopMemorizeAudio();
+    return;
+  }
+
+  stopVoice();
+  stopRefAudio();
+  stopMemorizeAudio();
+
+  const list = state.memorize.filteredQuestions;
+  const q = list[state.memorize.currentIndex];
+  if (!q) return;
+
+  let rawText = "";
+  let rateParam = "%2B0%25"; // 默认标准原速，适合背诵跟读
+
+  if (type === "question") {
+    rawText = q.question;
+    rateParam = "%2B25%25"; // 考官提问紧凑音速
+  } else if (type === "ref") {
+    rawText = q.reference_answer || "";
+    rateParam = "%2B0%25";  // 标答标准速度，跟读纠音
+  } else if (type === "short") {
+    rawText = q.shorthand || "";
+    rateParam = "%2B0%25";
+  }
+
+  // 清洗掉前缀
+  let cleanText = rawText.replace(/^[🗣️\s]*考场标准口语化作答示范[：:\s]*/, "").trim();
+  if (!cleanText) return;
+  if (cleanText.length > 500) {
+    cleanText = cleanText.substring(0, 500);
+  }
+
+  state.memorize.activeAudioType = type;
+
+  // 更新对应 UI 状态
+  if (type === "question") {
+    document.getElementById("mem-tts-q-icon").textContent = "⏹️";
+    document.getElementById("mem-tts-q-text").textContent = "停止";
+    document.getElementById("mem-tts-q-status").style.display = "flex";
+  } else if (type === "ref") {
+    document.getElementById("mem-tts-ref-icon").textContent = "⏹️";
+    document.getElementById("mem-tts-ref-text").textContent = "停止朗读";
+    document.getElementById("mem-tts-ref-status").style.display = "flex";
+  } else if (type === "short") {
+    document.getElementById("mem-tts-short-icon").textContent = "⏹️";
+    document.getElementById("mem-tts-short-text").textContent = "停止";
+    document.getElementById("mem-tts-short-status").style.display = "flex";
+  }
+
+  const audioUrl = `/api/audio/tts?text=${encodeURIComponent(cleanText)}&rate=${rateParam}`;
+  const audio = new Audio(audioUrl);
+  state.memorize.audioInstance = audio;
+
+  audio.onended = () => {
+    stopMemorizeAudio();
+  };
+
+  audio.onerror = () => {
+    console.warn("背记音频加载失败，尝试降级本地合成");
+    stopMemorizeAudio();
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      const isEn = /[a-zA-Z]{5,}/.test(cleanText);
+      utterance.lang = isEn ? "en-US" : "zh-CN";
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  audio.play().catch((err) => {
+    console.warn("音频播放受限:", err);
+    stopMemorizeAudio();
+  });
+}
+

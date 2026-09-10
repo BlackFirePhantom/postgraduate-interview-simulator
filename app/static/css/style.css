@@ -594,4 +594,102 @@ body {
   border-color: #93c5fd;
 }
 
+/* ---------------- 专门背记与刷题模式专属样式 ---------------- */
+.mem-cat-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 2px 6px 2px;
+}
+
+.mem-cat-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.mem-cat-chip {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.mem-cat-chip:hover {
+  border-color: #93c5fd;
+  color: #2563eb;
+  background: #f8fafc;
+}
+
+.mem-cat-chip.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.mem-bottom-toolbar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 10px 14px 14px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+  margin-left: -16px;
+  margin-right: -16px;
+  margin-bottom: -16px;
+}
+
+.mem-nav-btn {
+  padding: 9px 12px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mem-nav-btn:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.mem-nav-btn:active {
+  transform: scale(0.96);
+}
+
+#mem-subcat-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+#mem-jump-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+
 

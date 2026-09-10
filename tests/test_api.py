@@ -156,3 +156,18 @@ def test_api_tts_with_custom_rate():
     assert len(res.content) > 100
 
 
+def test_api_questions_by_category_for_memorize():
+    """验证背记模式所需的全部 218 题及分类、子领域、标答、速记的完整可用性"""
+    for cat, min_count in [("academic", 120), ("english", 70), ("general", 18)]:
+        res = client.get(f"/api/questions?category={cat}")
+        assert res.status_code == 200
+        items = res.json()
+        assert len(items) >= min_count
+        assert all(item["category"] == cat for item in items)
+        assert all(len(item["question"]) > 0 for item in items)
+        assert all(len(item["reference_answer"]) > 0 for item in items)
+        assert all(len(item["shorthand"]) > 0 for item in items)
+        assert all(len(item["subcategory"]) > 0 for item in items)
+
+
+
