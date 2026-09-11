@@ -93,7 +93,7 @@
               <span>📖 专门背记刷题模式 (直看标答 · 免流程)</span>
               <span style="font-size: 0.7rem; background: #059669; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 600;">考前必刷</span>
             </div>
-            <span style="font-size: 0.73rem; font-weight: normal; color: #047857; display: block; margin-top: 3px;">全库 218 题 · 权威标答与3句速记直看 · 保留AI朗读跟读纠音 · 无倒计时无压力</span>
+            <span style="font-size: 0.73rem; font-weight: normal; color: #047857; display: block; margin-top: 3px;">全库 163 题 · 五大核心专业课(数电/模电/CMOS/半导体材料与器件) · 权威标答与3句速记直看</span>
           </button>
         </div>
 
@@ -104,7 +104,7 @@
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px;">
             <button type="button" class="spec-cat-btn active" data-cat="academic" style="padding: 8px 4px; font-size: 0.78rem; text-align: center; border-radius: 8px; border: 1.5px solid #2563eb; background: #eff6ff; color: #1d4ed8; font-weight: 700; cursor: pointer;">
-              💻 核心专业课<br><span style="font-size: 0.68rem; font-weight: normal; color: #3b82f6;">120 题</span>
+              💻 核心专业课<br><span style="font-size: 0.68rem; font-weight: normal; color: #3b82f6;">65 题 (五大核心课)</span>
             </button>
             <button type="button" class="spec-cat-btn" data-cat="english" style="padding: 8px 4px; font-size: 0.78rem; text-align: center; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer;">
               🗣️ 英语口语<br><span style="font-size: 0.68rem; color: #94a3b8;">79 题</span>
@@ -393,7 +393,7 @@
           🏠 返回主页
         </button>
         <div style="font-size: 0.82rem; font-weight: 700; color: #1e3a8a;">
-          <span id="mem-progress-label">第 1 / 218 题</span>
+          <span id="mem-progress-label">第 1 / 65 题</span>
         </div>
         <button type="button" id="btn-mem-toggle-answer" class="action-btn" style="font-size: 0.74rem; padding: 4px 8px; border-radius: 6px; background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; font-weight: 600; cursor: pointer;">
           👁️ 遮挡标答 (自测)
@@ -402,8 +402,8 @@
 
       <!-- 一级分类筛选胶囊标签 -->
       <div class="mem-cat-bar" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px;">
-        <button type="button" class="mem-cat-chip active" data-cat="all">全部 (218)</button>
-        <button type="button" class="mem-cat-chip" data-cat="academic">💻 专业课 (120)</button>
+        <button type="button" class="mem-cat-chip active" data-cat="academic">💻 专业课 (65)</button>
+        <button type="button" class="mem-cat-chip" data-cat="all">全部 (163)</button>
         <button type="button" class="mem-cat-chip" data-cat="english">🗣️ 英语 (79)</button>
         <button type="button" class="mem-cat-chip" data-cat="general">🧠 综合 (19)</button>
       </div>
@@ -535,7 +535,7 @@
           下一题 ➔
         </button>
         <div style="display: flex; align-items: center; gap: 2px; padding: 0 2px;">
-          <input type="number" id="mem-jump-input" min="1" max="218" placeholder="题号" style="width: 44px; padding: 6px 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
+          <input type="number" id="mem-jump-input" min="1" max="163" placeholder="题号" style="width: 44px; padding: 6px 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
           <button type="button" id="btn-mem-jump" class="action-btn" style="padding: 6px 6px; font-size: 0.74rem;">Go</button>
         </div>
       </div>

@@ -15,7 +15,7 @@ def test_api_questions_endpoint():
     response = client.get("/api/questions")
     assert response.status_code == 200
     questions = response.json()
-    assert len(questions) >= 200
+    assert len(questions) >= 150
     assert all("shorthand" in q and len(q["shorthand"]) > 0 for q in questions)
     categories = {q["category"] for q in questions}
     assert "academic" in categories
@@ -165,8 +165,8 @@ def test_tts_service_english_rate_is_plus_10_percent():
 
 
 def test_api_questions_by_category_for_memorize():
-    """验证背记模式所需的全部 218 题及分类、子领域、标答、速记的完整可用性"""
-    for cat, min_count in [("academic", 120), ("english", 70), ("general", 18)]:
+    """验证背记模式所需的全部 163 题及分类、子领域、标答、速记的完整可用性，且专业课无任何FPGA内容"""
+    for cat, min_count in [("academic", 60), ("english", 70), ("general", 18)]:
         res = client.get(f"/api/questions?category={cat}")
         assert res.status_code == 200
         items = res.json()
@@ -176,6 +176,15 @@ def test_api_questions_by_category_for_memorize():
         assert all(len(item["reference_answer"]) > 0 for item in items)
         assert all(len(item["shorthand"]) > 0 for item in items)
         assert all(len(item["subcategory"]) > 0 for item in items)
+        if cat == "academic":
+            assert all("FPGA" not in item["question"] for item in items)
+            assert all("FPGA" not in item["subcategory"] for item in items)
+            subcats = {item["subcategory"] for item in items}
+            assert any("数电" in s for s in subcats)
+            assert any("模电" in s for s in subcats)
+            assert any("CMOS" in s for s in subcats)
+            assert any("半导体材料" in s for s in subcats)
+            assert any("半导体器件" in s for s in subcats)
 
 
 

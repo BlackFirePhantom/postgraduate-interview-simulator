@@ -1427,7 +1427,7 @@ window.playSingleRefAudio = playSingleRefAudio;
 async function preloadQuestionBank() {
   if (state.memorize.allQuestions && state.memorize.allQuestions.length > 0) return;
   try {
-    const cached = sessionStorage.getItem("cached_question_bank_v2");
+    const cached = sessionStorage.getItem("cached_question_bank_v3");
     if (cached) {
       state.memorize.allQuestions = JSON.parse(cached);
       return;
@@ -1437,12 +1437,28 @@ async function preloadQuestionBank() {
       const list = await res.json();
       state.memorize.allQuestions = list;
       try {
-        sessionStorage.setItem("cached_question_bank_v2", JSON.stringify(list));
+        sessionStorage.setItem("cached_question_bank_v3", JSON.stringify(list));
       } catch (_) {}
     }
   } catch (e) {
     // 静默预加载失败不中断主流程
   }
+}
+
+function updateMemorizeCategoryBadges() {
+  const allQ = state.memorize.allQuestions || [];
+  const counts = { all: allQ.length, academic: 0, english: 0, general: 0 };
+  allQ.forEach((q) => {
+    if (counts[q.category] !== undefined) counts[q.category]++;
+  });
+  document.querySelectorAll(".mem-cat-chip").forEach((chip) => {
+    const cat = chip.dataset.cat;
+    chip.classList.toggle("active", cat === state.memorize.currentCategory);
+    if (cat === "all") chip.textContent = `全部 (${counts.all})`;
+    else if (cat === "academic") chip.textContent = `💻 专业课 (${counts.academic})`;
+    else if (cat === "english") chip.textContent = `🗣️ 英语 (${counts.english})`;
+    else if (cat === "general") chip.textContent = `🧠 综合 (${counts.general})`;
+  });
 }
 
 async function enterMemorizeMode() {
@@ -1470,7 +1486,7 @@ async function enterMemorizeMode() {
   // 4. 如果尚未拉取题库数据，优先从 sessionStorage 读取或调用 /api/questions 加载
   if (!state.memorize.allQuestions || state.memorize.allQuestions.length === 0) {
     try {
-      const cached = sessionStorage.getItem("cached_question_bank_v2");
+      const cached = sessionStorage.getItem("cached_question_bank_v3");
       if (cached) {
         state.memorize.allQuestions = JSON.parse(cached);
       }
@@ -1479,14 +1495,14 @@ async function enterMemorizeMode() {
 
   if (!state.memorize.allQuestions || state.memorize.allQuestions.length === 0) {
     const qTextEl = document.getElementById("mem-q-text");
-    if (qTextEl) qTextEl.textContent = "正在调取全库 218 道真题与权威标答 (首次加载约需数秒，后续秒开)...";
+    if (qTextEl) qTextEl.textContent = "正在调取全库核心专业课真题与权威标答...";
     try {
       const res = await fetch("/api/questions");
       if (!res.ok) throw new Error("获取题库失败");
       const list = await res.json();
       state.memorize.allQuestions = list;
       try {
-        sessionStorage.setItem("cached_question_bank_v2", JSON.stringify(list));
+        sessionStorage.setItem("cached_question_bank_v3", JSON.stringify(list));
       } catch (_) {}
     } catch (err) {
       alert("加载题库失败: " + err.message);
@@ -1495,7 +1511,13 @@ async function enterMemorizeMode() {
     }
   }
 
-  // 5. 初始化二级学科选项与题目筛选并渲染
+  // 5. 默认聚焦五大核心专业课
+  state.memorize.currentCategory = "academic";
+  state.memorize.currentSubcat = "all";
+  state.memorize.currentIndex = 0;
+
+  // 6. 初始化一级分类标签题量与高亮、二级学科选项与题目筛选并渲染
+  updateMemorizeCategoryBadges();
   updateMemorizeSubcategories();
   filterMemorizeQuestions();
   renderMemorizeCard();
@@ -1527,11 +1549,37 @@ function updateMemorizeSubcategories() {
     }
   });
 
+  const preferredOrder = [
+    "数电（数字电路与逻辑设计）",
+    "模电（模拟电子技术与电路基础）",
+    "CMOS（CMOS集成电路与器件设计）",
+    "半导体材料（半导体物理与能带理论）",
+    "半导体器件（半导体微电子器件物理）",
+    "自我介绍与综合素养",
+    "综合素质与跨学科能力",
+    "Daily Life & Interests",
+    "Family & Hometown",
+    "Work, Study & Teamwork",
+    "Technical IC - Ultra-Short"
+  ];
+
+  const sortedList = Array.from(subcats).sort((a, b) => {
+    const ia = preferredOrder.indexOf(a);
+    const ib = preferredOrder.indexOf(b);
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+    return a.localeCompare(b, "zh-CN");
+  });
+
   select.innerHTML = '<option value="all">全学科知识点 (全部)</option>';
-  Array.from(subcats).forEach((sub) => {
+  sortedList.forEach((sub) => {
     const opt = document.createElement("option");
     opt.value = sub;
-    opt.textContent = sub;
+    const subCount = state.memorize.allQuestions.filter(
+      (q) => (cat === "all" || q.category === cat) && q.subcategory === sub
+    ).length;
+    opt.textContent = `${sub} (${subCount}题)`;
     select.appendChild(opt);
   });
 
@@ -1572,6 +1620,8 @@ function renderMemorizeCard() {
   // 1. 进度指示与题号
   document.getElementById("mem-progress-label").textContent = `第 ${idx + 1} / ${total} 题`;
   document.getElementById("mem-q-id").textContent = (q.id || "").toUpperCase();
+  const jumpInput = document.getElementById("mem-jump-input");
+  if (jumpInput) jumpInput.max = total;
 
   // 2. 分类徽标与子领域
   const catBadge = document.getElementById("mem-badge-cat");
