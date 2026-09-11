@@ -1620,8 +1620,6 @@ function renderMemorizeCard() {
   // 1. 进度指示与题号
   document.getElementById("mem-progress-label").textContent = `第 ${idx + 1} / ${total} 题`;
   document.getElementById("mem-q-id").textContent = (q.id || "").toUpperCase();
-  const jumpInput = document.getElementById("mem-jump-input");
-  if (jumpInput) jumpInput.max = total;
 
   // 2. 分类徽标与子领域
   const catBadge = document.getElementById("mem-badge-cat");
